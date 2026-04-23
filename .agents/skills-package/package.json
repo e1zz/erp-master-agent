@@ -1,0 +1,21 @@
+{
+  "name": "agents-skills-installer",
+  "version": "0.1.0",
+  "description": "Small NPX installer to place agent skills into a repository's .agents/skills folder.",
+  "bin": {
+    "install-skills": "index.js"
+  },
+  "preferGlobal": false,
+  "scripts": {
+    "start": "node index.js",
+    "build": "node build.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["agents","skills","installer","npx"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "fs-extra": "^11.1.1",
+    "minimist": "^1.2.8"
+  }
+}

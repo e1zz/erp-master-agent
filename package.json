@@ -1,0 +1,32 @@
+{
+  "name": "erp-master-agent",
+  "version": "0.1.0",
+  "description": "NPX installer for ERP marketplace agent skills across Claude, VS Code, and Antigravity-compatible workspaces.",
+  "bin": {
+    "erp-master-agent": "index.js",
+    "install-skills": "index.js"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "prepare": "node build.js",
+    "prepack": "node build.js"
+  },
+  "files": [
+    "index.js",
+    "build.js",
+    "README.md",
+    "skills/**"
+  ],
+  "keywords": [
+    "agents",
+    "skills",
+    "claude",
+    "copilot",
+    "antigravity",
+    "npx"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
