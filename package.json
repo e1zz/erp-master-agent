@@ -1,9 +1,9 @@
 {
-  "name": "erp-master-agent",
+  "name": "erus-master-agent",
   "version": "0.1.0",
   "description": "NPX installer for ERP marketplace agent skills across Claude, VS Code, and Antigravity-compatible workspaces.",
   "bin": {
-    "erp-master-agent": "index.js",
+    "erus-master-agent": "index.js",
     "install-skills": "index.js"
   },
   "scripts": {

@@ -21,7 +21,7 @@ You can also add a custom destination with `--target-dir` if your IDE uses a dif
 Run this from the root of the project that should receive the skills:
 
 ```bash
-npx erp-master-agent
+npx erus-master-agent
 ```
 
 This installs the bundled skills into the default workspace targets.
@@ -31,9 +31,9 @@ This installs the bundled skills into the default workspace targets.
 Pick one or more presets when you only want a subset of the supported targets:
 
 ```bash
-npx erp-master-agent --ide claude
-npx erp-master-agent --ide vscode
-npx erp-master-agent --ide antigravity
+npx erus-master-agent --ide claude
+npx erus-master-agent --ide vscode
+npx erus-master-agent --ide antigravity
 ```
 
 ### 3. Preview before writing files
@@ -41,7 +41,7 @@ npx erp-master-agent --ide antigravity
 Use dry-run mode to confirm what will be written:
 
 ```bash
-npx erp-master-agent --dry-run
+npx erus-master-agent --dry-run
 ```
 
 ### 4. Install into another repository
@@ -49,7 +49,7 @@ npx erp-master-agent --dry-run
 Point the installer at a different repo root:
 
 ```bash
-npx erp-master-agent --repo /path/to/project
+npx erus-master-agent --repo /path/to/project
 ```
 
 ## Installation Paths
@@ -72,7 +72,7 @@ The CLI understands both presets and direct paths.
 If your tool uses a different workspace folder, add it explicitly:
 
 ```bash
-npx erp-master-agent --target-dir .cursor/skills
+npx erus-master-agent --target-dir .cursor/skills
 ```
 
 You can repeat `--target-dir` as many times as needed.
@@ -82,7 +82,7 @@ You can repeat `--target-dir` as many times as needed.
 ### For users
 
 1. Open the project where you want the skills installed.
-2. Run `npx erp-master-agent`.
+2. Run `npx erus-master-agent`.
 3. Confirm the generated folder exists in the target workspace.
 4. Restart or reload the IDE if it caches skill directories.
 5. Ask the agent to use one of the installed skills by name.
@@ -104,13 +104,13 @@ You can repeat `--target-dir` as many times as needed.
 ## Command Reference
 
 ```bash
-npx erp-master-agent
-npx erp-master-agent --ide claude
-npx erp-master-agent --ide vscode --ide antigravity
-npx erp-master-agent --target-dir .cursor/skills
-npx erp-master-agent --repo /path/to/project
-npx erp-master-agent --dry-run
-npx erp-master-agent --help
+npx erus-master-agent
+npx erus-master-agent --ide claude
+npx erus-master-agent --ide vscode --ide antigravity
+npx erus-master-agent --target-dir .cursor/skills
+npx erus-master-agent --repo /path/to/project
+npx erus-master-agent --dry-run
+npx erus-master-agent --help
 ```
 
 ## Publishing Guide
