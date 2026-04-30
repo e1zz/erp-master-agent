@@ -1,0 +1,186 @@
+# Usage Rules for Agents
+
+When an AI agent uses the `erp-master-agent` skills, they should:
+
+1. Look in the installed skills directory (e.g., `.agents/skills`, `.claude/skills`, `.cursor/skills`, `.github/skills`, or `.windsurf/skills` — depending on your IDE) for domain-specific ERP marketplace knowledge.
+2. Read the `SKILL.md` file *before* executing any modifications to the repository, especially related to API payload mapping for Walmart, TikTok, Amazon, and MercadoLibre.
+3. Keep tokens in mind. If you are writing boilerplate, compress output when possible or explicitly call out what you are skipping.
+4. **Skill Auditor Restrictions**: The `skill-auditor` agent (or any agent modifying skills) must *never* autonomously rewrite or modify a user's skills. Always require explicit user confirmation before editing or updating skill documents regarding their code.
+
+---
+
+# Architecture Fitness Harness
+
+Architecture fitness rules define the structural, performance, and observability constraints that the agent must preserve. These are feedforward guides that prevent architectural drift.
+
+## Structural Boundaries (Controller → Orchestrator → Service)
+
+The Laravel application follows a strict layered architecture. Respect these boundaries:
+
+1. **Controllers** (`app/Http/Controllers/`) — Handle HTTP request/response only. NEVER put business logic here.
+2. **Orchestrators** (`app/Application/Orchestrators/`) — Coordinate domain workflows. This is where business rules live.
+3. **Factories** (`app/Marketplaces/Factories/`) — Resolve marketplace-specific service implementations. NEVER hardcode marketplace selection in controllers or orchestrators.
+4. **Services** (`app/Marketplaces/Services/`) — Implement marketplace-specific API interactions.
+5. **Mappers** (`app/Marketplaces/Mappers/`) — Transform between local domain models and marketplace payloads.
+6. **Jobs** (`app/Jobs/`) — Async work. Always dispatch through the orchestrator, not directly from controllers.
+7. **Models** (`app/Models/`) — Eloquent models. NEVER call external APIs from models.
+
+### Violation Signals
+
+If you find yourself doing any of these, stop and reconsider:
+
+- Writing API calls directly in a controller → use an orchestrator + service
+- Adding marketplace-specific `if/switch` statements in an orchestrator → use the factory pattern
+- Putting business logic in a job → delegate to an orchestrator
+- Making a model call an external service → use a service class
+
+## Multi-Tenancy Invariants
+
+- Every database query MUST be scoped to the current tenant (store).
+- NEVER allow cross-tenant data access.
+- Connection credentials are per-store. Always resolve connection via `ConnectionService` with store context.
+
+## Observability Standards
+
+When adding or modifying code:
+
+1. **Logging**: Use structured logging with marketplace context: `Log::info('message', ['marketplace' => $marketplace, 'store_id' => $storeId, 'order_id' => $orderId])`.
+2. **Error handling**: Catch marketplace API exceptions at the service level. Log the full response. Re-throw as domain exceptions for the orchestrator.
+3. **Job failures**: All jobs MUST implement `$tries`, `$backoff`, and `failed()` method for dead-letter visibility.
+4. **Internal events**: State transitions that the ERP needs to know about MUST fire `InternalEvent` records. Do not skip this.
+
+## Performance Constraints
+
+- **Bulk operations**: When syncing inventory or products, batch API calls. Never make N+1 individual calls.
+- **Queue jobs**: Long-running marketplace API calls MUST be dispatched to the queue, not executed synchronously in HTTP requests.
+- **Rate limiting**: Respect marketplace rate limits. Use the rate limiter configuration in `config/marketplaces.php`.
+- **Token refresh**: OAuth token refresh MUST be handled transparently by the connection service. Callers should not manage tokens directly.
+
+## Kill Switches
+
+These must never be bypassed or removed:
+
+| Switch | Purpose |
+|---|---|
+| `DISABLE_MARKETPLACE_PUSH` | Global outbound kill switch — stops all writes to marketplaces |
+| `skipMarketplaceFanout` | Per-request flag — prevents echo loops on marketplace-originated writes |
+
+## Adding New Marketplaces
+
+When adding a new marketplace integration, follow the existing pattern exactly:
+
+1. Create connection service in `app/Marketplaces/Services/<Marketplace>/`
+2. Create mapper in `app/Marketplaces/Mappers/<Marketplace>/`
+3. Register in the capability factory
+4. Add configuration in `config/marketplaces.php`
+5. Create corresponding skill files: `<marketplace>-api/`, `<marketplace>-expert/`, `<marketplace>-order-worker/`, `<marketplace>-stock-worker/`
+6. Wire webhook handler in `WebhookOrchestrator`
+
+---
+
+# Auto-Activation Rules
+
+To ensure that the AI agents automatically invoke the correct skills when users ask questions, follow these auto-activation guidelines across different IDEs and runtimes.
+
+## 1. Description-based Triggers (Claude Code, Antigravity, Gemini)
+
+For AI clients that dynamically load skills based on context, the `description` field in the `SKILL.md` YAML frontmatter is critical.
+
+- **Rule**: Start the description with a clear "Use this to..." or "Use when..." clause.
+- **Example**: `description: "Use for Amazon order, fulfillment, and webhook behavior only in this ERP integration."`
+- If the trigger keywords are not present in the prompt or context, the skill will not auto-activate.
+- The agent reads **only** the `name` and `description` at discovery time (~30 tokens per skill), then loads the full body on activation.
+
+## 2. File-based Auto-Activation (VS Code Copilot)
+
+VS Code Copilot supports scoped instruction files with `applyTo` glob patterns.
+
+- **Rule**: The CLI generates scoped `*.instructions.md` files in `.github/instructions/` with `applyTo` YAML frontmatter (e.g., `applyTo: "**/*amazon*/**,**/*amazon*"`).
+- When a user selects or opens a file matching the `applyTo` globs, VS Code Copilot auto-activates that marketplace context.
+- The main `copilot-instructions.md` is always-on for every chat request.
+
+## 3. Glob-based Scoped Rules (Cursor)
+
+Cursor supports `.mdc` rule files in `.cursor/rules/` with tiered activation:
+
+- **Always Apply** (`erp-core.mdc`): Core architecture rules loaded on every request. Keep under 200 words.
+- **Auto-Attached** (per-marketplace `.mdc`): Triggered only when working in files matching the `globs` frontmatter pattern (e.g., `globs: "**/*amazon*/**,**/*Amazon*/**"`).
+- **Rule**: Do not duplicate skill content in rules — point the agent to the skill file instead.
+
+## 4. Activation Modes (Windsurf)
+
+Windsurf supports four activation modes for rules in `.windsurf/rules/`:
+
+- **Always On**: Rule applies to every Cascade action.
+- **Manual**: Triggered by typing `@rule-name` in chat.
+- **Model Decision**: Cascade decides based on the rule's description.
+- **Glob**: Auto-triggers on file path matches.
+
+## 5. Master Agent Delegation
+
+If using a "master agent" pattern, the master prompt must explicitly list the activation conditions for its subagents.
+
+- **Rule**: The master agent's `SKILL.md` should clearly state: "Delegates to [Marketplace] Order Worker if the task involves orders, fulfillment, or webhooks."
+- The `erp-marketplace-master` skill already implements this with its `agents` frontmatter field listing all expert agents.
+
+---
+
+# ERP Master Agent Coding Rules
+
+When contributing to this workspace or using the skills, please adhere to the following rules:
+
+1. **Idempotency**: All skills and installation scripts must be idempotent. Running them multiple times should not corrupt the target directory or create duplicate entries.
+2. **No Interactive Prompts**: Do not write scripts that require interactive `stdin` input unless explicitly bypassed with a `--force` or `--yes` flag. The installer must run headlessly.
+3. **Cross-Platform Compatibility**: Use `path.join` and `path.resolve` in all Node.js scripts instead of hardcoding slashes to ensure it works on Windows, macOS, and Linux.
+4. **Agent File Formats**: Maintain `.md` format for all skill and rule definitions so they remain easily readable by both LLMs and humans.
+
+---
+
+# Feedback Sensors
+
+Feedback sensors observe the agent's output and provide self-correction signals. Use these after making changes to catch issues before they reach human review.
+
+## Computational Sensors (Run After Every Change)
+
+When modifying PHP/Laravel code in this ERP integration, always run these checks before presenting your work:
+
+1. **Syntax check**: `php -l <modified-file>` on each changed file.
+2. **Test suite**: `php artisan test --filter=<relevant-test>` for the narrowest test that covers the changed behavior.
+3. **Static analysis**: If available, run `./vendor/bin/phpstan analyse <modified-file>` to catch type errors.
+4. **Route verification**: After modifying routes or controllers, run `php artisan route:list --path=<endpoint-prefix>` to confirm the endpoint is registered correctly.
+
+## Self-Correction Protocol
+
+When a sensor reports an error:
+
+1. **DO NOT** present the error to the user and ask what to do. Fix it yourself first.
+2. Read the full error message — it contains the correction hint.
+3. Apply the fix, then re-run the sensor to confirm the fix worked.
+4. Only escalate to the user if the error persists after two self-correction attempts.
+
+## Inferential Sensors (Run on Significant Changes)
+
+For larger changes (new endpoints, new marketplace integrations, structural refactors):
+
+1. **Diff review**: Before committing, review the full diff and check for:
+   - Unintended side effects on other marketplace flows
+   - Missing `skipMarketplaceFanout` on marketplace-originated writes
+   - Broken `DISABLE_MARKETPLACE_PUSH` kill-switch paths
+   - Missing internal event delivery (`InternalEvent`)
+2. **Pattern consistency**: Compare the new code against the closest existing implementation for the same pattern (e.g., compare a new order worker against an existing one).
+
+## Validation Commands Quick Reference
+
+| Domain | Command |
+|---|---|
+| Syntax | `php -l app/path/to/File.php` |
+| Tests (scoped) | `php artisan test --filter=OrderOrchestratorTest` |
+| Tests (full) | `php artisan test` |
+| Static analysis | `./vendor/bin/phpstan analyse app/` |
+| Routes | `php artisan route:list --path=api/v2` |
+| Queue check | `php artisan queue:work --once` |
+| Config cache | `php artisan config:clear` |
+
+## Steering Loop
+
+If a feedback sensor catches the same category of error more than twice across different tasks, update this file with a new sensor rule targeting that specific error pattern. This is how the harness improves over time.

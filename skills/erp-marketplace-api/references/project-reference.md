@@ -1,5 +1,61 @@
 # ERP Marketplace API Reference
 
+Last reviewed: 2026-04-30
+
+## Purpose
+
+This repository is a Laravel 12 ERP integration API that sits between the ERP, the local database, and multiple marketplaces. It is not a thin proxy. It exposes ERP-facing HTTP endpoints, persists normalized local records, pulls and pushes marketplace state, processes inbound webhooks, and sends internal events back to the ERP.
+
+## Source Of Truth
+
+- `bootstrap/app.php` registers `routes/api.php` as the API surface, `routes/web.php` as the browser surface, and `/up` as the framework health endpoint.
+- `routes/api.php` is the API contract.
+- `routes/web.php` only serves the welcome view and is not part of the ERP API contract.
+- `routes.json` is empty and should not be treated as an API source.
+- Runtime ownership lives in `app/Http/Controllers`, `app/Application/Orchestrators`, `app/Jobs`, `app/Marketplaces`, and the relevant models.
+
+## Fast Route Map
+
+| Family | Base path | Primary owner | Notes |
+| --- | --- | --- | --- |
+| Root and auth helper | `/api/`, `/api/user` | `InventoryController`, Laravel closure | Root is a local inventory listing; `/api/user` is the only route in this file with `auth:sanctum`. |
+| Local product CRUD | `/api/products/*` | `SellingItemController` | Local database CRUD only; not the canonical marketplace product sync surface. |
+| Payments | `/api/payments/*` | `PaymentController` -> `PaymentOrchestrator` | Active production surface even though it lives outside `/api/v2/*`. |
+| Refund test endpoints | `/api/test/refunds/*` | `Api\RefundTestController` | Debug and troubleshooting only. |
+| Legacy compatibility webhook | `/api/marketplace/{marketplace}/webhook` | `MarketplaceWebhookController` | Older driver-based webhook path. Prefer `/api/v2/webhooks/{marketplace}`. |
+| Orders | `/api/v2/orders/*` | `OrdersController` -> `OrderOrchestrator` | Pull, import, refresh, ship, cancel, label, refund lookups. |
+| Inventory | `/api/v2/inventory/*` | `InventoryController` / `InventorySyncController` -> `InventoryOrchestrator` | Local reads plus push and pull orchestration. |
+| Catalogs | `/api/v2/catalogs/*` | `CatalogsController` | TikTok categories, global brands, and marketplace brand mappings. |
+| Products | `/api/v2/products/*` | `ProductsController` -> `ProductOrchestrator` | Pull, merge, fan-out, direct create/update, per-marketplace operations. |
+| Refunds | `/api/v2/refunds/*` | `RefundsController` -> `RefundOrchestrator` | Local refund list plus pull workflows. |
+| Webhooks | `/api/v2/webhooks/*` | `WebhooksController` -> `WebhookOrchestrator` | Inbound processing plus marketplace subscription administration. |
+| Connections | `/api/v2/connections/*` | `ConnectionsController` -> `ConnectionOrchestrator` | Connection status, init, refresh, credential storage, cleanup. |
+| OAuth | `/api/v2/oauth/*` | `OAuthController` | Browser redirect/callback/token refresh flows. |
+| Dev and job helpers | `/api/v2/dev/*`, `/api/v2/jobs/*` | `DevToolsController`, `JobController` | Debug-only config/token helpers and cached job progress. |
+| Attachments | `/api/v2/attachments/*` | `AttachmentsController` | Generic file upload/read helper. |
+| Internal ERP relay | `/api/marketplaces/webhook` | `InternalWebhookController` -> `ErpWebhookService` | Forwards selected internal events to the ERP. |
+
+## Route Quirks Worth Remembering
+
+- `GET /api/v2/products/{sku}/marketplaces` is declared twice in `routes/api.php` with two controller methods. Treat that as a cleanup target and verify live routing before changing behavior around it.
+- `GET /api/v2/connections/test-all` is declared after `GET /api/v2/connections/{marketplace}`. Because both are single-segment GET routes under the same prefix, this is a likely route-order hazard.
+- Controller docblocks do not always match the route file. Prefer the route file over comments.
+
+## Recommended Trace Order
+
+1. Start from `routes/api.php`.
+2. Open the owning controller in `app/Http/Controllers`.
+3. Step to the orchestrator in `app/Application/Orchestrators` when the controller is marketplace-agnostic.
+4. Resolve the relevant marketplace capability factory or service in `app/Marketplaces`.
+5. Check `app/Jobs` for async side effects.
+6. Confirm persistence and side effects in the relevant models and `InternalEvent` pipeline.
+
+## Reference Files
+
+- [Endpoints](./endpoints.md)
+- [Architecture](./architecture.md)
+- [Invariants](./invariants.md)# ERP Marketplace API Reference
+
 Last reviewed: 2026-04-22
 
 ## Purpose
