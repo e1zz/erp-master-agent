@@ -222,6 +222,278 @@ function generateIdeRuleFile(repoRoot, fileName, rulesDir, dryRun) {
 }
 
 // ---------------------------------------------------------------------------
+// CLAUDE.md generator (for Claude Code)
+// ---------------------------------------------------------------------------
+
+function generateClaudeMd(repoRoot, rulesDir, skillsDir, dryRun) {
+  const filePath = path.join(repoRoot, 'CLAUDE.md');
+  if (dryRun) {
+    console.log('  Would generate CLAUDE.md');
+    return;
+  }
+
+  // Build skill index from frontmatter
+  const skillIndex = buildSkillIndex(skillsDir);
+
+  const lines = [
+    '# ERP Marketplace Integration — Agent Instructions',
+    '',
+    'This project is a Laravel ERP integration API connecting to multiple marketplaces.',
+    '',
+    '## Available Skills',
+    '',
+    'Skills are installed in `.claude/skills/`. Read the relevant SKILL.md before working on marketplace-specific code.',
+    '',
+  ];
+
+  for (const skill of skillIndex) {
+    lines.push(`- **${skill.name}**: ${skill.shortDesc}`);
+  }
+
+  lines.push('');
+  lines.push('## Key Rules');
+  lines.push('');
+  lines.push('Detailed rules are in `.claude/rules/`. The critical ones:');
+  lines.push('');
+  lines.push('- Run `php -l <file>` after every PHP change');
+  lines.push('- Run the narrowest relevant test before presenting work');
+  lines.push('- NEVER bypass `DISABLE_MARKETPLACE_PUSH` or `skipMarketplaceFanout`');
+  lines.push('- Follow Controller → Orchestrator → Factory → Service layering');
+  lines.push('- All database queries MUST be tenant-scoped');
+  lines.push('- Read the matching SKILL.md before modifying marketplace-specific code');
+  lines.push('');
+  lines.push('## Trace Order');
+  lines.push('');
+  lines.push('Route → Controller → Orchestrator → Factory → Service → Mapper');
+  lines.push('');
+
+  fs.writeFileSync(filePath, lines.join('\n') + '\n', 'utf8');
+  console.log('  Generated CLAUDE.md');
+}
+
+// ---------------------------------------------------------------------------
+// Copilot instructions generator (for VS Code / GitHub Copilot)
+// ---------------------------------------------------------------------------
+
+function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
+  const instructionsDir = path.join(repoRoot, '.github', 'instructions');
+  const mainFile = path.join(repoRoot, '.github', 'copilot-instructions.md');
+
+  if (dryRun) {
+    console.log('  Would generate .github/copilot-instructions.md');
+    console.log('  Would generate .github/instructions/ (scoped rules)');
+    return;
+  }
+
+  ensureDir(instructionsDir, false);
+
+  // Main copilot-instructions.md (always-on)
+  const skillIndex = buildSkillIndex(skillsDir);
+  const mainLines = [
+    '# ERP Marketplace Integration',
+    '',
+    'This project is a Laravel ERP integration API.',
+    '',
+    '## Architecture',
+    '',
+    '- Follow Controller → Orchestrator → Factory → Service → Mapper layering',
+    '- NEVER put business logic in controllers',
+    '- NEVER hardcode marketplace selection — use factories',
+    '- All database queries MUST be tenant-scoped',
+    '',
+    '## Verification',
+    '',
+    '- Run `php -l <file>` after every PHP change',
+    '- Run the narrowest relevant test before presenting work',
+    '',
+    '## Kill Switches (NEVER bypass)',
+    '',
+    '- `DISABLE_MARKETPLACE_PUSH` — global outbound kill switch',
+    '- `skipMarketplaceFanout` — prevents echo loops on marketplace-originated writes',
+    '',
+    '## Skills Reference',
+    '',
+    'Marketplace-specific skills are in `.github/skills/`. Read the relevant SKILL.md before working on marketplace code.',
+    '',
+  ];
+  fs.writeFileSync(mainFile, mainLines.join('\n') + '\n', 'utf8');
+
+  // Scoped instruction files per marketplace
+  const marketplaces = ['amazon', 'walmart', 'mercadolibre', 'tiktok', 'tiendanube'];
+  for (const mp of marketplaces) {
+    const scopedFile = path.join(instructionsDir, `${mp}.instructions.md`);
+    const scopedContent = [
+      '---',
+      `applyTo: "**/*${mp}*/**,**/*${mp}*"`,
+      '---',
+      '',
+      `When working on ${mp} integration code, read these skills first:`,
+      '',
+      `- .github/skills/${mp}-expert/SKILL.md`,
+      `- .github/skills/${mp}-api/SKILL.md if it exists`,
+      '',
+      `Follow the constraints defined in the skill files. Do not assume parity with other marketplaces.`,
+      '',
+    ].join('\n');
+    fs.writeFileSync(scopedFile, scopedContent, 'utf8');
+  }
+
+  console.log('  Generated .github/copilot-instructions.md');
+  console.log('  Generated .github/instructions/ (5 scoped rules)');
+}
+
+// ---------------------------------------------------------------------------
+// Cursor scoped rules generator (.cursor/rules/*.mdc)
+// ---------------------------------------------------------------------------
+
+function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
+  const cursorRulesDir = path.join(repoRoot, '.cursor', 'rules');
+
+  if (dryRun) {
+    console.log('  Would generate .cursor/rules/ (scoped .mdc files)');
+    return;
+  }
+
+  ensureDir(cursorRulesDir, false);
+
+  // Global always-on rule (concise)
+  const globalRule = [
+    '---',
+    'description: "ERP marketplace integration core rules"',
+    'globs: "**/*.php"',
+    'alwaysApply: true',
+    '---',
+    '',
+    '# ERP Integration Rules',
+    '',
+    '- Follow Controller → Orchestrator → Factory → Service → Mapper layering',
+    '- All database queries MUST be tenant-scoped',
+    '- NEVER bypass `DISABLE_MARKETPLACE_PUSH` or `skipMarketplaceFanout`',
+    '- Run `php -l <file>` after every PHP change',
+    '- Run the narrowest relevant test before presenting work',
+    '- Read the matching SKILL.md in `.cursor/skills/` before modifying marketplace code',
+    '',
+  ].join('\n');
+  fs.writeFileSync(path.join(cursorRulesDir, 'erp-core.mdc'), globalRule, 'utf8');
+
+  // Per-marketplace auto-attached rules
+  const marketplaces = [
+    { name: 'amazon', glob: '**/*amazon*/**,**/*Amazon*/**' },
+    { name: 'walmart', glob: '**/*walmart*/**,**/*Walmart*/**' },
+    { name: 'mercadolibre', glob: '**/*mercadolibre*/**,**/*MercadoLibre*/**' },
+    { name: 'tiktok', glob: '**/*tiktok*/**,**/*TikTok*/**' },
+    { name: 'tiendanube', glob: '**/*tiendanube*/**,**/*TiendaNube*/**,**/*nuvemshop*/**' },
+  ];
+
+  for (const mp of marketplaces) {
+    const content = [
+      '---',
+      `description: "Rules for ${mp.name} marketplace integration"`,
+      `globs: "${mp.glob}"`,
+      'alwaysApply: false',
+      '---',
+      '',
+      `# ${mp.name.charAt(0).toUpperCase() + mp.name.slice(1)} Integration`,
+      '',
+      `When working on ${mp.name} code, read these skill files first:`,
+      '',
+      `- .cursor/skills/${mp.name}-expert/SKILL.md`,
+      `- .cursor/skills/${mp.name}-api/SKILL.md (if it exists)`,
+      '',
+      `Do not assume parity with other marketplace integrations.`,
+      `Verify the implemented flow against the skill reference before making changes.`,
+      '',
+    ].join('\n');
+    fs.writeFileSync(path.join(cursorRulesDir, `${mp.name}.mdc`), content, 'utf8');
+  }
+
+  console.log('  Generated .cursor/rules/ (6 scoped .mdc files)');
+}
+
+// ---------------------------------------------------------------------------
+// Windsurf scoped rules generator (.windsurf/rules/*.md)
+// ---------------------------------------------------------------------------
+
+function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
+  const wsRulesDir = path.join(repoRoot, '.windsurf', 'rules');
+
+  if (dryRun) {
+    console.log('  Would generate .windsurf/rules/ (scoped .md files)');
+    return;
+  }
+
+  ensureDir(wsRulesDir, false);
+
+  // Global core rule (always-on)
+  const globalRule = [
+    '---',
+    'trigger: always_on',
+    'description: "ERP marketplace integration core rules"',
+    '---',
+    '',
+    '# ERP Integration Rules',
+    '',
+    '- Follow Controller → Orchestrator → Factory → Service → Mapper layering',
+    '- All database queries MUST be tenant-scoped',
+    '- NEVER bypass `DISABLE_MARKETPLACE_PUSH` or `skipMarketplaceFanout`',
+    '- Run `php -l <file>` after every PHP change',
+    '- Run the narrowest relevant test before presenting work',
+    '- Read the matching SKILL.md in `.windsurf/skills/` before modifying marketplace code',
+    '',
+  ].join('\n');
+  fs.writeFileSync(path.join(wsRulesDir, 'erp-core.md'), globalRule, 'utf8');
+
+  // Per-marketplace rules (model-decision activation)
+  const marketplaces = ['amazon', 'walmart', 'mercadolibre', 'tiktok', 'tiendanube'];
+
+  for (const mp of marketplaces) {
+    const content = [
+      '---',
+      'trigger: model_decision',
+      `description: "Activate when working on ${mp} marketplace integration code"`,
+      '---',
+      '',
+      `# ${mp.charAt(0).toUpperCase() + mp.slice(1)} Integration`,
+      '',
+      `When working on ${mp} code, read these skill files first:`,
+      '',
+      `- .windsurf/skills/${mp}-expert/SKILL.md`,
+      `- .windsurf/skills/${mp}-api/SKILL.md (if it exists)`,
+      '',
+      `Do not assume parity with other marketplace integrations.`,
+      `Verify the implemented flow against the skill reference before making changes.`,
+      '',
+    ].join('\n');
+    fs.writeFileSync(path.join(wsRulesDir, `${mp}.md`), content, 'utf8');
+  }
+
+  console.log('  Generated .windsurf/rules/ (6 scoped .md files)');
+}
+
+// ---------------------------------------------------------------------------
+// Skill index builder (reads YAML frontmatter)
+// ---------------------------------------------------------------------------
+
+function buildSkillIndex(skillsDir) {
+  const skills = [];
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillFile = path.join(skillsDir, entry.name, 'SKILL.md');
+    if (!fs.existsSync(skillFile)) continue;
+
+    const content = fs.readFileSync(skillFile, 'utf8');
+    const nameMatch = content.match(/^name:\s*["']?([^"'\n]+)["']?/m);
+    const descMatch = content.match(/^description:\s*["']?([^"'\n]{1,120})/m);
+
+    skills.push({
+      name: nameMatch ? nameMatch[1].trim() : entry.name,
+      shortDesc: descMatch ? descMatch[1].trim().replace(/["']$/, '') : '',
+    });
+  }
+  return skills.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -275,12 +547,47 @@ async function main() {
       copyDir(rulesDir, abs, args.dryRun);
     }
 
-    // Generate IDE-specific rule files
+    // Generate IDE-specific merged rule files (.cursorrules, .windsurfrules)
     if (Object.keys(resolved.ruleFiles).length > 0) {
       console.log('\nIDE rule files:');
       for (const [, fileName] of Object.entries(resolved.ruleFiles)) {
         generateIdeRuleFile(args.repo, fileName, rulesDir, args.dryRun);
       }
+    }
+  }
+
+  // Generate IDE-specific instruction and scoped rule files
+  const activeIdes = new Set();
+  for (const raw of args.ide) {
+    const key = raw.toLowerCase();
+    if (key === 'all') {
+      ['agents', 'claude', 'vscode', 'cursor', 'windsurf'].forEach(k => activeIdes.add(k));
+    } else {
+      activeIdes.add(key);
+    }
+  }
+
+  const hasIdeSpecific = activeIdes.has('claude') || activeIdes.has('vscode') ||
+                         activeIdes.has('copilot') || activeIdes.has('github') ||
+                         activeIdes.has('cursor') || activeIdes.has('windsurf');
+
+  if (hasIdeSpecific && rulesDir) {
+    console.log('\nIDE-specific harness files:');
+
+    if (activeIdes.has('claude')) {
+      generateClaudeMd(args.repo, rulesDir, skillsDir, args.dryRun);
+    }
+
+    if (activeIdes.has('vscode') || activeIdes.has('copilot') || activeIdes.has('github')) {
+      generateCopilotInstructions(args.repo, rulesDir, skillsDir, args.dryRun);
+    }
+
+    if (activeIdes.has('cursor')) {
+      generateCursorScopedRules(args.repo, rulesDir, skillsDir, args.dryRun);
+    }
+
+    if (activeIdes.has('windsurf')) {
+      generateWindsurfScopedRules(args.repo, rulesDir, skillsDir, args.dryRun);
     }
   }
 

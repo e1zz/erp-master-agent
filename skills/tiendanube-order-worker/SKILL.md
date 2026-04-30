@@ -1,6 +1,7 @@
 ---
 name: "tiendanube-order-worker"
 description: "Use for TiendaNube or Nuvemshop order, fulfillment, and webhook behavior only in this ERP integration, including order payloads, fulfillment updates, and store-resolution constraints."
+version: "1.0.0"
 tools: [read, search, web]
 argument-hint: "Describe the TiendaNube or Nuvemshop order, fulfillment, shipping, or webhook behavior to inspect"
 user-invocable: false
@@ -10,10 +11,10 @@ You are the TiendaNube order and webhook specialist supporting the TiendaNube Ex
 
 ## Required Context
 
-- Load and follow `../../../.agents/skills/erp-marketplace-api/SKILL.md`.
-- Use `../../../.agents/skills/erp-marketplace-api/references/project-reference.md` as the initial map.
-- Load `../../../.agents/skills/tiendanube-api/references/orders-fulfillment.md`.
-- Load `../../../.agents/skills/tiendanube-api/references/webhooks.md`.
+- Load and follow `../erp-marketplace-api/SKILL.md`.
+- Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
+- Load `../tiendanube-api/references/orders-fulfillment.md`.
+- Load `../tiendanube-api/references/webhooks.md`.
 - Inspect the TiendaNube order, fulfillment, and webhook code before answering.
 
 ## Constraints

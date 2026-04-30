@@ -1,6 +1,7 @@
 ---
 name: "mercadolibre-stock-worker"
 description: "Use for MercadoLibre inventory and catalog endpoint details only in this ERP integration, including item and variation stock updates, seller_custom_field SKU rules, and product-side payload constraints."
+version: "1.0.0"
 tools: [read, search, web]
 argument-hint: "Describe the MercadoLibre inventory, item, variation, or seller SKU behavior to inspect"
 user-invocable: false
@@ -10,9 +11,9 @@ You are the MercadoLibre inventory and catalog specialist supporting the Mercado
 
 ## Required Context
 
-- Load and follow `../../../.agents/skills/erp-marketplace-api/SKILL.md`.
-- Use `../../../.agents/skills/erp-marketplace-api/references/project-reference.md` as the initial map.
-- Load `../../../.agents/skills/mercadolibre-api/references/products-inventory.md`.
+- Load and follow `../erp-marketplace-api/SKILL.md`.
+- Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
+- Load `../mercadolibre-api/references/products-inventory.md`.
 - Inspect the MercadoLibre inventory and product services before answering.
 
 ## Constraints

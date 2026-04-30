@@ -1,6 +1,7 @@
 ---
 name: "mercadolibre-order-worker"
 description: "Use for MercadoLibre order, payment-adjacent, and webhook behavior only in this ERP integration, including order payloads, orders_v2 resource resolution, and shipping-related constraints."
+version: "1.0.0"
 tools: [read, search, web]
 argument-hint: "Describe the MercadoLibre order, payment, shipping, webhook, or resource-resolution behavior to inspect"
 user-invocable: false
@@ -10,10 +11,10 @@ You are the MercadoLibre order and webhook specialist supporting the MercadoLibr
 
 ## Required Context
 
-- Load and follow `../../../.agents/skills/erp-marketplace-api/SKILL.md`.
-- Use `../../../.agents/skills/erp-marketplace-api/references/project-reference.md` as the initial map.
-- Load `../../../.agents/skills/mercadolibre-api/references/orders-fulfillment.md`.
-- Load `../../../.agents/skills/mercadolibre-api/references/webhooks.md`.
+- Load and follow `../erp-marketplace-api/SKILL.md`.
+- Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
+- Load `../mercadolibre-api/references/orders-fulfillment.md`.
+- Load `../mercadolibre-api/references/webhooks.md`.
 - Inspect the MercadoLibre order, webhook, and related job code before answering.
 
 ## Constraints

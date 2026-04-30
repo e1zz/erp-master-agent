@@ -1,6 +1,13 @@
+---
+name: "walmart-api"
+description: "Use when you need Walmart Marketplace API specific endpoint details, payloads, authentication, or local ERP implementation references. Provides modular reference files for auth, products/inventory, orders/fulfillment, and webhooks."
+version: "1.0.0"
+user-invocable: false
+---
+
 # Walmart API Sub-Skill
 
-This skill provides Walmart-specific API references, payloads, and local ERP implementations. It is modularized to avoid token bloat. Do not read the reference files unless the current task explicitly involves that specific Walmart domain.
+This skill provides Walmart-specific API references, payloads, and local ERP implementations. Modularized to avoid token bloat. Do not read the reference files unless the current task explicitly involves that specific Walmart domain.
 
 ## References
 
@@ -8,3 +15,5 @@ This skill provides Walmart-specific API references, payloads, and local ERP imp
 - [Products and Inventory](./references/products-inventory.md)
 - [Orders and Fulfillment](./references/orders-fulfillment.md)
 - [Webhooks](./references/webhooks.md)
+
+Read the smallest reference that matches the task before looking elsewhere.

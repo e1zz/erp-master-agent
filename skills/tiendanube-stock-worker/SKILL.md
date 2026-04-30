@@ -1,6 +1,7 @@
 ---
 name: "tiendanube-stock-worker"
 description: "Use for TiendaNube or Nuvemshop inventory and catalog endpoint details only in this ERP integration, including variant stock updates, product surfaces, and stock-specific constraints."
+version: "1.0.0"
 tools: [read, search, web]
 argument-hint: "Describe the TiendaNube or Nuvemshop inventory, variant, product, or stock behavior to inspect"
 user-invocable: false
@@ -10,9 +11,9 @@ You are the TiendaNube inventory and catalog specialist supporting the TiendaNub
 
 ## Required Context
 
-- Load and follow `../../../.agents/skills/erp-marketplace-api/SKILL.md`.
-- Use `../../../.agents/skills/erp-marketplace-api/references/project-reference.md` as the initial map.
-- Load `../../../.agents/skills/tiendanube-api/references/products-inventory.md`.
+- Load and follow `../erp-marketplace-api/SKILL.md`.
+- Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
+- Load `../tiendanube-api/references/products-inventory.md`.
 - Inspect the TiendaNube inventory and product services before answering.
 
 ## Constraints

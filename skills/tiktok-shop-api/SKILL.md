@@ -1,6 +1,7 @@
 ---
 name: tiktok-shop-api
 description: 'Documentation and structural reference for the TikTok Shop Open Platform API (TTS API) v202309. Use when integrating with TikTok Shop, handling OAuth, generating HMAC-SHA256 signatures, managing products/inventory, fulfilling orders, or implementing webhooks.'
+version: "1.0.0"
 argument-hint: 'Specify the endpoint or workflow you need help with.'
 user-invocable: true
 ---

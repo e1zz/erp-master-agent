@@ -1,6 +1,7 @@
 ---
 name: erp-marketplace-api
 description: 'Understand and work on this Laravel ERP-facing marketplace integration API. Use when tracing endpoints, controllers, orchestrators, queue jobs, webhook processing, inventory/product/order/refund sync, connection and OAuth behavior, internal ERP webhook delivery, or marketplace-specific rules for Walmart, MercadoLibre, TikTok, TiendaNube, Amazon, and related integrations.'
+version: "1.0.0"
 argument-hint: 'Ask about endpoints, workflows, controllers, jobs, data flow, or marketplace-specific behavior'
 user-invocable: true
 ---

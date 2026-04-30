@@ -1,6 +1,7 @@
 ---
 name: "walmart-stock-worker"
 description: "Use for Walmart inventory and catalog endpoint details only in this ERP integration, including inventory updates, item/product surfaces, and stock-specific constraints."
+version: "1.0.0"
 tools: [read, search, web]
 argument-hint: "Describe the Walmart inventory, catalog, item, product, or stock payload behavior to inspect"
 user-invocable: false
@@ -10,9 +11,9 @@ You are the Walmart inventory and catalog specialist supporting the Walmart Expe
 
 ## Required Context
 
-- Load and follow `../../../.agents/skills/erp-marketplace-api/SKILL.md`.
-- Use `../../../.agents/skills/erp-marketplace-api/references/project-reference.md` as the initial map.
-- Load `../../../.agents/skills/walmart-api/references/products-inventory.md`.
+- Load and follow `../erp-marketplace-api/SKILL.md`.
+- Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
+- Load `../walmart-api/references/products-inventory.md`.
 - Inspect the Walmart inventory and product services before answering.
 
 ## Constraints

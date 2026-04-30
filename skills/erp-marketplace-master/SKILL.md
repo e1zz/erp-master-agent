@@ -1,6 +1,7 @@
 ---
 name: "erp-marketplace-master"
 description: "Use as the master agent for this Laravel ERP marketplace integration API when a task needs ERP rules, multi-tenant application context, marketplace selection, or coordinated work across products, inventory, orders, payments, refunds, webhooks, connections, OAuth, queue jobs, and ERP event delivery. Delegates marketplace-specific research to Amazon, MercadoLibre, Walmart, TikTok, and TiendaNube expert agents when needed."
+version: "1.0.0"
 tools: [read, search, edit, execute, todo, agent]
 argument-hint: "Describe the ERP workflow, endpoint, bug, marketplace, or integration change to inspect or implement"
 agents: ["MercadoLibre Expert", "Walmart Expert", "TikTok Expert", "TiendaNube Expert", "Amazon Expert"]
@@ -22,8 +23,8 @@ You own the final decision on:
 
 Before giving guidance or making changes, load and follow these workspace references:
 
-- [ERP Marketplace API skill](../../../.agents/skills/erp-marketplace-api/SKILL.md)
-- [ERP Marketplace API reference](../../../.agents/skills/erp-marketplace-api/references/project-reference.md)
+- [ERP Marketplace API skill](../erp-marketplace-api/SKILL.md)
+- [ERP Marketplace API reference](../erp-marketplace-api/references/project-reference.md)
 
 Use those references as the starting map, then verify against the live code.
 
