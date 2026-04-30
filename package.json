@@ -1,27 +1,27 @@
 {
   "name": "erus-master-agent",
-  "version": "0.1.0",
-  "description": "NPX installer for ERP marketplace agent skills across Claude, VS Code, and Antigravity-compatible workspaces.",
+  "version": "0.2.0",
+  "description": "NPX installer for ERP marketplace agent skills across Claude Code, VS Code Copilot, Cursor, Windsurf, Antigravity, and other agent runtimes.",
   "bin": {
     "erus-master-agent": "index.js",
     "install-skills": "index.js"
   },
   "scripts": {
-    "build": "node build.js",
-    "prepare": "node build.js",
-    "prepack": "node build.js"
+    "test": "node index.js --dry-run"
   },
   "files": [
     "index.js",
-    "build.js",
     "README.md",
-    "skills/**"
+    "skills/**",
+    "rules/**"
   ],
   "keywords": [
     "agents",
     "skills",
     "claude",
     "copilot",
+    "cursor",
+    "windsurf",
     "antigravity",
     "npx"
   ],

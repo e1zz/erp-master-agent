@@ -1,143 +1,333 @@
 # ERP Master Agent
 
-ERP Master Agent is an `npx`-installable skill pack for marketplace automation work. It bundles the repo’s skill definitions and copies them into the skill directory expected by the target IDE or agent runtime.
+An `npx`-installable skill pack for marketplace automation work with AI coding agents. It bundles domain-specific skills (Amazon, MercadoLibre, Walmart, TikTok, TiendaNube) and agent behavior rules, and installs them into whichever IDE or agent runtime you use — with a single command.
 
-The package is designed to work from the repository root, so a user can install it into another project with a single command instead of manually copying folders.
+---
 
 ## What Gets Installed
 
-The bundled skills live in `.agents/skills` in this repository. When you install them into another project, the CLI copies that bundle into one or more of these workspace-local destinations:
+| Content | Description |
+|---|---|
+| **Skills** (24 skill folders) | Markdown-based domain knowledge for each marketplace: API contracts, auth flows, order/inventory/webhook behavior, and a master orchestrator |
+| **Rules** (3 rule files) | Agent behavior guidelines, auto-activation triggers, and coding standards |
 
-- `.agents/skills` for Antigravity-style or other `.agents`-aware runtimes
-- `.claude/skills` for Claude Code
-- `.github/skills` for VS Code Copilot-style workspace customizations
-
-You can also add a custom destination with `--target-dir` if your IDE uses a different local folder.
+---
 
 ## Quick Start
 
-### 1. Install into the current project
-
-Run this from the root of the project that should receive the skills:
+Run this from the root of your target project:
 
 ```bash
 npx erus-master-agent
 ```
 
-This installs the bundled skills into the default workspace targets.
+This installs skills and rules into **all** supported IDE targets at once. To install for a specific IDE only, see below.
 
-### 2. Install for a specific IDE
+---
 
-Pick one or more presets when you only want a subset of the supported targets:
+## Per-IDE Setup Instructions
+
+### Antigravity / Gemini
+
+**Preset**: `antigravity`, `gemini`, or `agents`
 
 ```bash
-npx erus-master-agent --ide claude
-npx erus-master-agent --ide vscode
 npx erus-master-agent --ide antigravity
 ```
 
-### 3. Preview before writing files
+**What gets created:**
 
-Use dry-run mode to confirm what will be written:
+```
+your-project/
+├── .agents/
+│   ├── skills/          ← 24 skill folders with SKILL.md files
+│   └── rules/           ← agent-behavior.md, autoactivation.md, coding-standards.md
+```
+
+**How it works:** Antigravity and Gemini automatically discover skills in `.agents/skills/`. Each skill folder contains a `SKILL.md` with YAML frontmatter (`name`, `description`) that the runtime uses for auto-activation. Open your project, and the agent will see the skills listed in its available tools.
+
+**Verify:** Ask the agent _"What skills do you have available?"_ — it should list the ERP marketplace skills.
+
+---
+
+### Claude Code
+
+**Preset**: `claude`
+
+```bash
+npx erus-master-agent --ide claude
+```
+
+**What gets created:**
+
+```
+your-project/
+├── .claude/
+│   ├── skills/          ← 24 skill folders with SKILL.md files
+│   └── rules/           ← agent-behavior.md, autoactivation.md, coding-standards.md
+```
+
+**How it works:** Claude Code reads skill definitions from `.claude/skills/`. Each `SKILL.md` starts with a description that tells Claude when to activate the skill. Claude will automatically invoke the relevant skill when you ask about marketplace integrations.
+
+**Verify:** Open Claude Code in your project and ask _"Read the erp-marketplace-master skill"_ — it should find and display the skill content.
+
+---
+
+### VS Code Copilot / GitHub Copilot
+
+**Preset**: `vscode`, `copilot`, or `github`
+
+```bash
+npx erus-master-agent --ide vscode
+```
+
+**What gets created:**
+
+```
+your-project/
+├── .github/
+│   ├── skills/          ← 24 skill folders with SKILL.md files
+│   └── rules/           ← agent-behavior.md, autoactivation.md, coding-standards.md
+```
+
+**How it works:** VS Code Copilot supports workspace-level custom instructions. The skills are placed in `.github/skills/` where Copilot can reference them. For auto-activation based on file paths, you can also create scoped instruction files in `.github/instructions/` with `applyTo` glob patterns (e.g., `applyTo: "src/amazon/**/*.php"`).
+
+**Optional — file-based auto-activation:**
+
+Create `.github/instructions/amazon.instructions.md`:
+
+```yaml
+---
+applyTo: "src/amazon/**/*.php"
+---
+```
+
+```markdown
+When working in Amazon integration files, read and follow the amazon-expert skill in .github/skills/amazon-expert/SKILL.md
+```
+
+**Verify:** Open a file in Copilot Chat and ask about a marketplace topic — reference the skill by name if needed.
+
+---
+
+### Cursor
+
+**Preset**: `cursor`
+
+```bash
+npx erus-master-agent --ide cursor
+```
+
+**What gets created:**
+
+```
+your-project/
+├── .cursor/
+│   ├── skills/          ← 24 skill folders with SKILL.md files
+│   └── rules/           ← agent-behavior.md, autoactivation.md, coding-standards.md
+├── .cursorrules         ← merged rules file (auto-generated)
+```
+
+**How it works:** Cursor reads project-level rules from `.cursorrules` at the project root. The installer generates this file by merging all rule markdown files into a single document. Skills in `.cursor/skills/` can be referenced by instructing Cursor to read them.
+
+**Tip:** Add a line to your `.cursorrules` to point Cursor at the skills:
+
+```markdown
+When working on marketplace integrations, read the relevant SKILL.md file from .cursor/skills/ before making changes.
+For example, for Amazon orders: read .cursor/skills/amazon-order-worker/SKILL.md
+```
+
+**Verify:** Open Cursor in your project — the rules should auto-load. Ask _"What rules are active?"_ to confirm.
+
+---
+
+### Windsurf
+
+**Preset**: `windsurf`
+
+```bash
+npx erus-master-agent --ide windsurf
+```
+
+**What gets created:**
+
+```
+your-project/
+├── .windsurf/
+│   ├── skills/          ← 24 skill folders with SKILL.md files
+│   └── rules/           ← agent-behavior.md, autoactivation.md, coding-standards.md
+├── .windsurfrules       ← merged rules file (auto-generated)
+```
+
+**How it works:** Windsurf reads project rules from `.windsurfrules` at the project root. The installer generates this file from the bundled rule definitions. Skills can be referenced in prompts or rules.
+
+**Tip:** Add to `.windsurfrules`:
+
+```markdown
+When the user asks about marketplace API integration, read the matching skill from .windsurf/skills/<marketplace>-expert/SKILL.md before responding.
+```
+
+**Verify:** Open Windsurf and confirm the rules are loaded by asking about them.
+
+---
+
+### Custom / Other IDEs
+
+If your IDE or agent runtime uses a different directory:
+
+```bash
+npx erus-master-agent --target-dir .my-agent/skills
+```
+
+You can repeat `--target-dir` as many times as needed:
+
+```bash
+npx erus-master-agent --target-dir .my-agent/skills --target-dir .another/skills
+```
+
+> **Note:** `--target-dir` only installs skills (not rules or IDE rule files). Copy the `rules/` folder manually if needed.
+
+---
+
+### Multiple IDEs at Once
+
+Install for multiple IDEs in a single command:
+
+```bash
+npx erus-master-agent --ide claude --ide cursor
+```
+
+Or install everywhere:
+
+```bash
+npx erus-master-agent --ide all
+```
+
+---
+
+## Preview Before Installing
+
+Use dry-run mode to see what will be written without touching the filesystem:
 
 ```bash
 npx erus-master-agent --dry-run
+npx erus-master-agent --ide cursor --dry-run
 ```
 
-### 4. Install into another repository
+---
+
+## Install Into Another Project
 
 Point the installer at a different repo root:
 
 ```bash
-npx erus-master-agent --repo /path/to/project
+npx erus-master-agent --repo /path/to/other-project --ide claude
 ```
 
-## Installation Paths
-
-The CLI understands both presets and direct paths.
-
-### Presets
-
-- `all` installs to every default workspace target
-- `claude` installs to `.claude/skills`
-- `vscode` installs to `.github/skills`
-- `copilot` installs to `.github/skills`
-- `github` installs to `.github/skills`
-- `antigravity` installs to `.agents/skills`
-- `agents` installs to `.agents/skills`
-- `gemini` installs to `.agents/skills`
-
-### Custom target folders
-
-If your tool uses a different workspace folder, add it explicitly:
-
-```bash
-npx erus-master-agent --target-dir .cursor/skills
-```
-
-You can repeat `--target-dir` as many times as needed.
-
-## Full End-to-End Workflow
-
-### For users
-
-1. Open the project where you want the skills installed.
-2. Run `npx erus-master-agent`.
-3. Confirm the generated folder exists in the target workspace.
-4. Restart or reload the IDE if it caches skill directories.
-5. Ask the agent to use one of the installed skills by name.
-
-### For maintainers
-
-1. Update the source skills under `.agents/skills`.
-2. Run `npm run build` to generate the distributable `skills/` folder.
-3. Test the installer with `npx .` or a local tarball.
-4. Publish with `npm publish` when the bundle is ready.
-
-## Repository Layout
-
-- `index.js` is the CLI entrypoint
-- `build.js` creates the publishable `skills/` bundle from `.agents/skills`
-- `package.json` defines the npm package and `npx` bin
-- `README.md` documents installation and maintenance steps
+---
 
 ## Command Reference
 
 ```bash
-npx erus-master-agent
-npx erus-master-agent --ide claude
-npx erus-master-agent --ide vscode --ide antigravity
-npx erus-master-agent --target-dir .cursor/skills
-npx erus-master-agent --repo /path/to/project
-npx erus-master-agent --dry-run
-npx erus-master-agent --help
+npx erus-master-agent                              # Install to all IDE targets
+npx erus-master-agent --ide claude                  # Claude Code only
+npx erus-master-agent --ide vscode                  # VS Code Copilot only
+npx erus-master-agent --ide cursor                  # Cursor only
+npx erus-master-agent --ide windsurf                # Windsurf only
+npx erus-master-agent --ide antigravity             # Antigravity / Gemini only
+npx erus-master-agent --ide cursor --ide claude     # Multiple IDEs
+npx erus-master-agent --target-dir .custom/skills   # Custom directory
+npx erus-master-agent --repo /path/to/project       # Different project root
+npx erus-master-agent --dry-run                     # Preview only
+npx erus-master-agent --help                        # Show help
 ```
 
-## Publishing Guide
+---
 
-If you want to publish this repository as an npm package, run:
+## Repository Layout
+
+```
+erp-master-agent/
+├── skills/                    ← Canonical skill definitions (24 folders)
+│   ├── amazon-api/
+│   ├── amazon-expert/
+│   ├── amazon-order-worker/
+│   ├── amazon-stock-worker/
+│   ├── erp-marketplace-api/
+│   ├── erp-marketplace-master/
+│   ├── mercadolibre-api/
+│   ├── mercadolibre-expert/
+│   ├── mercadolibre-order-worker/
+│   ├── mercadolibre-stock-worker/
+│   ├── skill-auditor/
+│   ├── tiendanube-api/
+│   ├── tiendanube-expert/
+│   ├── tiendanube-order-worker/
+│   ├── tiendanube-stock-worker/
+│   ├── tiktok-expert/
+│   ├── tiktok-finance-worker/
+│   ├── tiktok-order-worker/
+│   ├── tiktok-shop-api/
+│   ├── tiktok-stock-worker/
+│   ├── walmart-api/
+│   ├── walmart-expert/
+│   ├── walmart-order-worker/
+│   └── walmart-stock-worker/
+├── rules/                     ← Agent behavior rules
+│   ├── agent-behavior.md
+│   ├── autoactivation.md
+│   └── coding-standards.md
+├── index.js                   ← CLI entrypoint (npx bin)
+├── package.json               ← npm package config
+├── .gitignore
+└── README.md
+```
+
+---
+
+## Bundled Skills
+
+| Marketplace | Skills |
+|---|---|
+| **ERP Core** | `erp-marketplace-api`, `erp-marketplace-master`, `skill-auditor` |
+| **Amazon** | `amazon-api`, `amazon-expert`, `amazon-order-worker`, `amazon-stock-worker` |
+| **MercadoLibre** | `mercadolibre-api`, `mercadolibre-expert`, `mercadolibre-order-worker`, `mercadolibre-stock-worker` |
+| **TikTok Shop** | `tiktok-shop-api`, `tiktok-expert`, `tiktok-finance-worker`, `tiktok-order-worker`, `tiktok-stock-worker` |
+| **TiendaNube** | `tiendanube-api`, `tiendanube-expert`, `tiendanube-order-worker`, `tiendanube-stock-worker` |
+| **Walmart** | `walmart-api`, `walmart-expert`, `walmart-order-worker`, `walmart-stock-worker` |
+
+---
+
+## Publishing
 
 ```bash
-npm run build
 npm publish
 ```
 
-The package is configured to include the root installer files and the generated `skills/` directory.
+The package ships `index.js`, `skills/**`, and `rules/**` directly — no build step required.
+
+---
 
 ## Troubleshooting
 
-### The installer says no bundled skills were found
+### "No bundled skills found"
 
-That means the package could not find the generated bundle. Run `npm run build` from the repository root before packaging or publishing.
+The `skills/` directory is missing from the package. If you cloned the repo, ensure the `skills/` folder exists at the root.
 
-### The target folder was not created
+### Target folder was not created
 
-Check that you ran the command in the correct repository root, or pass `--repo` to point at the right project.
+Check that you ran the command in the correct project root, or pass `--repo` to specify the right path.
 
-### The wrong IDE folder was used
+### Wrong IDE folder was used
 
-Pass a specific `--ide` value or use `--target-dir` to install into an exact path.
+Pass `--ide <name>` for a specific IDE, or use `--target-dir` for an exact custom path.
 
-## Notes For IDEs
+### `.cursorrules` or `.windsurfrules` not generated
 
-This package intentionally keeps the installation format simple: a folder of markdown skill definitions that the target agent runtime can discover in its expected workspace location. If an IDE uses a different folder naming convention, use `--target-dir` to adapt without changing the package itself.
+These are only generated when you use `--ide cursor` or `--ide windsurf` (or `--ide all`). They are not generated for `--target-dir` custom paths.
+
+### Skills not auto-activating
+
+- **Antigravity/Gemini/Claude**: Check that the `SKILL.md` frontmatter `description` starts with "Use for..." or "Use when..." keywords.
+- **VS Code Copilot**: Create `.github/instructions/*.instructions.md` files with `applyTo` globs for file-based activation.
+- **Cursor/Windsurf**: Add explicit instructions in `.cursorrules`/`.windsurfrules` to read skill files for relevant tasks.
