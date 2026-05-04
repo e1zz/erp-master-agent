@@ -79,6 +79,24 @@ Historically, Tiendanube used a single integer field `stock` on the variant. The
 ```
 *Note: If you are using `PATCH /products/stock-price` with multi-inventory, ensure your app permissions and scopes are updated to handle the new inventory endpoints.*
 
+### Fetching Locations
+
+`GET /locations`
+
+Before updating `inventory_levels`, you must retrieve the store's warehouse locations to get the `location_id`s.
+
+**Response Example:**
+```json
+[
+  {
+    "id": "loc_abc123",
+    "name": "Bodega Principal",
+    "type": "warehouse",
+    "address": "Calle Falsa 123"
+  }
+]
+```
+
 ## Local Repo Anchors
 
 - `app/Marketplaces/Services/Products/TiendanubeProductService.php`

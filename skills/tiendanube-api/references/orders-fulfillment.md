@@ -78,6 +78,55 @@ Used to cancel an order.
 ```
 *Note: Setting `restock: true` will automatically add the inventory back to the variants.*
 
+## 4. Transactions (Payments)
+
+`GET /orders/{order_id}/transactions`
+
+Returns the payment transactions associated with the order. Useful for determining the exact payment gateway (e.g., Mercado Pago, custom gateway) and the transaction status.
+
+**Response Fragment:**
+```json
+[
+  {
+    "id": "123456789",
+    "order_id": 987654321,
+    "status": "success",
+    "payment_provider": "mercadopago",
+    "payment_method": "credit_card",
+    "amount": "299.99",
+    "currency": "MXN"
+  }
+]
+```
+
+## 5. Draft Orders (B2B / Manual Creation)
+
+`POST /draft_orders`
+
+Allows the ERP to programmatically create an order (e.g., for phone sales or B2B). Once created, you can generate a payment link or mark it as paid.
+
+**Request Body:**
+```json
+{
+  "customer": {
+    "email": "juan@example.com",
+    "name": "Juan Perez"
+  },
+  "line_items": [
+    {
+      "variant_id": 1111111,
+      "quantity": 2
+    }
+  ],
+  "shipping_address": {
+    "address": "Av Reforma 123",
+    "city": "CDMX",
+    "province": "DF",
+    "zipcode": "06600"
+  }
+}
+```
+
 ## Local Repo Anchors
 
 - `app/Marketplaces/Services/Orders/TiendanubeOrderService.php`

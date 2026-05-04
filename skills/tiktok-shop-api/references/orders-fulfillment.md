@@ -256,43 +256,42 @@ Returns a PDF document URL for downloading/printing.
 | `SELLER` | Seller-arranged shipping — seller provides tracking number |
 | `PLATFORM_DIRECT` | Platform direct fulfillment (FBT/Fulfilled by TikTok) |
 
-## Returns and Refunds
+## Reverse Orders (Returns and Cancellations)
 
-### Get Return/Refund List
+The `reverse_orders` API manages post-sale scenarios like returns, refunds, and cancellations.
 
-`POST /return_refund/202309/returns/search`
+### Get Reverse Orders List
 
-### Get Return Detail
+`GET /return_refund/202309/reverse_orders`
 
-`GET /return_refund/202309/returns/{return_id}`
-
-### Seller Actions on Returns
-
-`POST /return_refund/202309/returns/{return_id}/approve`
-
-Available seller decisions:
-
-| Decision | Description |
+**Query Parameters:**
+| Parameter | Description |
 |---|---|
-| `APPROVE_RETURN` | Approve the return — buyer ships item back |
-| `APPROVE_REFUND` | Approve refund without return (refund-only) |
-| `DIRECT_REFUND` | Returnless refund — buyer keeps item |
-| `OFFER_PARTIAL_REFUND` | Offer partial refund — buyer keeps item |
+| `reverse_order_id` | Specific reverse order |
+| `order_id` | Get reverse orders for a specific parent order |
+| `reverse_type` | `CANCEL`, `REFUND_ONLY`, `RETURN_AND_REFUND` |
 
-`POST /return_refund/202309/returns/{return_id}/reject`
+### Seller Actions on Reverse Orders
 
-Requires `reject_reason` and optional evidence images.
+Sellers must respond to reverse order requests (like buyer cancellations or returns) within the SLA window (usually 24-48 hours) to prevent auto-approval.
 
-### Return Statuses
+#### Approve a Reverse Order
+`POST /return_refund/202309/reverse_orders/{reverse_order_id}/approve`
+
+#### Reject a Reverse Order
+`POST /return_refund/202309/reverse_orders/{reverse_order_id}/reject`
+
+Requires `reject_reason_key` and optional `comments`.
+
+### Reverse Order Statuses
 
 | Status | Description |
 |---|---|
-| `RETURN_OR_REFUND_REQUEST_PENDING` | Buyer submitted request, awaiting seller action |
-| `RETURN_OR_REFUND_REQUEST_SUCCESS` | Request approved |
-| `RETURN_OR_REFUND_REQUEST_COMPLETE` | Return/refund fully processed |
-| `REFUND_OR_RETURN_REQUEST_REJECT` | Seller rejected the request |
-
-**SLA:** Sellers must respond within **24-48 hours**. If no action is taken, the platform auto-approves.
+| `PENDING` | Request created, awaiting seller action |
+| `APPROVED` | Request approved |
+| `REJECTED` | Seller rejected the request |
+| `COMPLETED` | Return/refund fully processed |
+| `CANCELLED` | Buyer cancelled their request |
 
 ## Local Repo Anchors
 

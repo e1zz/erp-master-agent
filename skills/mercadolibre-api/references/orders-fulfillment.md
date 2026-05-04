@@ -274,21 +274,117 @@ For orders with `shipping_mode: "custom"`:
 
 ## Claims and Mediations
 
-### Get Claims for Order
+Claims are post-sale disputes opened by buyers (e.g., item not received, wrong item, defective). **Sellers must respond within the SLA or MercadoLibre will auto-resolve in the buyer's favor.**
+
+### Search Claims
 
 `GET https://api.mercadolibre.com/v1/claims/search?seller_id={SELLER_ID}&resource_id={ORDER_ID}`
 
-Claims can affect order status and may require seller response within specific timeframes.
+**Key Query Parameters:**
+| Parameter | Description |
+|---|---|
+| `seller_id` | Your seller user ID |
+| `resource_id` | Filter by specific order ID |
+| `status` | `opened`, `closed` |
+| `stage` | `claim`, `dispute`, `recontact` |
+| `limit` | Max results per page |
+| `offset` | Pagination offset |
+
+### Get Claim Details
+
+`GET https://api.mercadolibre.com/v1/claims/{CLAIM_ID}`
+
+**Response Fragment:**
+```json
+{
+  "id": 12345678,
+  "resource_id": 9876543210,
+  "status": "opened",
+  "type": "mediations",
+  "stage": "claim",
+  "reason_id": "ITEM_NOT_RECEIVED",
+  "date_created": "2026-05-01T12:00:00.000-04:00",
+  "resolution": null,
+  "players": [
+    {
+      "role": "complainant",
+      "user_id": 111111
+    },
+    {
+      "role": "respondent",
+      "user_id": 222222
+    }
+  ]
+}
+```
+
+### Respond to a Claim
+
+`POST https://api.mercadolibre.com/v1/claims/{CLAIM_ID}/actions`
+
+**Common Actions:**
+- **Respond with message:** Provide evidence or explanation.
+- **Offer refund:** Accept the claim and refund the buyer.
+- **Ship replacement:** Offer to ship a replacement item.
+
+> [!WARNING]
+> Claims have strict SLA windows (typically 2-5 business days). Failure to respond will result in auto-resolution in the buyer's favor, including a forced refund.
+
+---
 
 ## Buyer Messages
 
-### Get Order Messages
+Messages are scoped to a `pack_id` (multi-item carts) or `order_id` (single-item orders).
 
+### Get Messages
+
+**For pack orders (preferred):**
 `GET https://api.mercadolibre.com/messages/packs/{PACK_ID}/sellers/{SELLER_ID}`
 
-Or for non-pack orders:
-
+**For non-pack orders:**
 `GET https://api.mercadolibre.com/messages/orders/{ORDER_ID}/sellers/{SELLER_ID}`
+
+### Send a Message to the Buyer
+
+`POST https://api.mercadolibre.com/messages/packs/{PACK_ID}/sellers/{SELLER_ID}`
+
+**Request Body:**
+```json
+{
+  "from": {
+    "user_id": "{SELLER_ID}"
+  },
+  "to": {
+    "user_id": "{BUYER_ID}"
+  },
+  "text": "Hola, su pedido ha sido enviado. El número de rastreo es TRK-123."
+}
+```
+
+> [!IMPORTANT]
+> Always use `pack_id` when available. MercadoLibre has been migrating toward `pack_id` as the primary identifier for grouped orders. Subscribe to the `messages` webhook topic for real-time notifications instead of polling.
+
+---
+
+## Shipping Labels
+
+### Download Shipping Label (PDF)
+
+`GET https://api.mercadolibre.com/shipment_labels?shipment_ids={SHIPMENT_ID}&savePdf=Y`
+
+Returns a PDF file containing the shipping label for Mercado Envíos (`me2`) shipments.
+
+**Query Parameters:**
+| Parameter | Description |
+|---|---|
+| `shipment_ids` | One or multiple shipment IDs (comma-separated) |
+| `savePdf` | `Y` to force PDF format |
+| `response_type` | Alternative: `zpl2` for Zebra thermal printers |
+
+> [!IMPORTANT]
+> Shipping label endpoints **only work for `me2` shipments** (Mercado Envíos managed by MercadoLibre). For `custom` shipping mode, no labels are generated.
+
+---
 
 ## Local Repo Anchors
 
@@ -296,6 +392,7 @@ Or for non-pack orders:
 - `app/Marketplaces/Mappers/MercadoLibre/MercadoLibreOrderMapper.php`
 - `app/Jobs/ImportMercadoLibreOrderJob.php`
 - `app/Marketplaces/Services/Shipping/MercadoLibreShippingService.php`
+- `app/Marketplaces/Services/Claims/MercadoLibreClaimService.php`
 
 ## Notes
 
@@ -306,4 +403,3 @@ Or for non-pack orders:
 - Payment `transaction_amount` is the amount actually charged to the buyer.
 - `sale_fee` in order items represents MercadoLibre's commission per item.
 - Shipment statuses are pushed via the `shipments` webhook topic.
-- Shipping label endpoints only work for `me2` shipments — not `custom`.

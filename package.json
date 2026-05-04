@@ -1,6 +1,6 @@
 {
   "name": "erus-master-agent",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "NPX installer for ERP marketplace agent skills across Claude Code, VS Code Copilot, Cursor, Windsurf, Antigravity, and other agent runtimes.",
   "bin": {
     "erus-master-agent": "index.js",

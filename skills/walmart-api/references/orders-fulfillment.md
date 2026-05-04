@@ -6,6 +6,7 @@
 - Acknowledging orders (Critical mandatory step).
 - Updating order shipping status and tracking information.
 - Canceling or refunding orders.
+- Managing return requests (approve, reject, issue refunds).
 
 ## API References (Global Marketplace)
 
@@ -142,6 +143,46 @@ Used to cancel an order line *before* it has been shipped.
 `POST /v3/orders/{purchaseOrderId}/refund`
 
 Used to issue a refund *after* an order has been shipped. You must specify the reason for the refund.
+
+---
+
+### 6. Returns API
+
+Returns are managed separately from orders using the `/v3/returns` endpoints.
+
+#### Retrieve Returns
+
+`GET /v3/returns`
+
+**Key Query Parameters:**
+| Parameter | Description |
+|---|---|
+| `returnOrderId` | Filter by specific RMA number |
+| `customerOrderId` | Filter by the original customer order ID |
+| `status` | `INITIATED`, `DELIVERED`, `COMPLETED` |
+| `returnType` | `PREORDER`, `REPLACEMENT`, `REFUND` |
+| `returnCreationStartDate` | ISO 8601 date |
+| `returnCreationEndDate` | ISO 8601 date |
+| `isWFSEnabled` | `Y` for WFS-only, `N` for seller-fulfilled only |
+
+#### Approve a Return
+
+`POST /v3/returns/approve`
+
+#### Reject a Return
+
+`POST /v3/returns/reject`
+
+#### Issue a Refund for a Return Item
+
+`POST /v3/returns/{returnOrderId}/items/{returnOrderItemId}/refund`
+
+Issues a full or partial refund for a specific returned item.
+
+> [!WARNING]
+> **WFS Returns are View-Only.** If the item was fulfilled by Walmart Fulfillment Services (WFS), you **cannot** approve, reject, or issue refunds via the API. WFS returns are fully managed by Walmart. You can only `GET` them for record-keeping.
+
+---
 
 ## WFS vs Seller-Fulfilled Orders
 
