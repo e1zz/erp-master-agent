@@ -42,7 +42,15 @@ Retrieve a list of purchase orders.
 
 ---
 
-### 2. Acknowledge an Order (CRITICAL)
+### 2. Retrieve Single Order Detail
+
+`GET /v3/orders/{purchaseOrderId}`
+
+Retrieve the comprehensive details of a single order. This is critical for webhook-triggered order refresh flows where you only receive the `purchaseOrderId` and need to fetch the full payload.
+
+---
+
+### 3. Acknowledge an Order (CRITICAL)
 
 `POST /v3/orders/{purchaseOrderId}/acknowledge`
 
@@ -53,7 +61,7 @@ Before you can ship or process an order, you must move it from `Created` to `Ack
 
 ---
 
-### 3. Ship an Order
+### 4. Ship an Order
 
 `POST /v3/orders/{purchaseOrderId}/shipping`
 
@@ -98,7 +106,7 @@ Transitions the order to `Shipped`. You must provide tracking details.
 
 ---
 
-### 4. Cancel an Order
+### 5. Cancel an Order
 
 `POST /v3/orders/{purchaseOrderId}/cancel`
 
@@ -138,15 +146,54 @@ Used to cancel an order line *before* it has been shipped.
 
 ---
 
-### 5. Refund an Order
+### 6. Refund an Order
 
 `POST /v3/orders/{purchaseOrderId}/refund`
 
 Used to issue a refund *after* an order has been shipped. You must specify the reason for the refund.
 
+**Request Example:**
+```json
+{
+  "orderRefund": {
+    "purchaseOrderId": "111222333444",
+    "orderLines": {
+      "orderLine": [
+        {
+          "lineNumber": "1",
+          "refunds": {
+            "refund": [
+              {
+                "refundComments": "Customer returned item damaged",
+                "refundReason": "CustomerReturn",
+                "refundCharges": {
+                  "refundCharge": [
+                    {
+                      "refundReason": "CustomerReturn",
+                      "charge": {
+                        "chargeType": "PRODUCT",
+                        "chargeName": "Item Price",
+                        "chargeAmount": {
+                          "currency": "MXN",
+                          "amount": 299.00
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
 ---
 
-### 6. Returns API
+### 7. Returns API
 
 Returns are managed separately from orders using the `/v3/returns` endpoints.
 

@@ -178,6 +178,13 @@ Or update an existing description:
 }
 ```
 
+**Close Listing Permanently:**
+```json
+{
+  "status": "closed"
+}
+```
+
 ### 5. Search Seller Items
 
 `GET https://api.mercadolibre.com/users/{USER_ID}/items/search?status=active&offset=0&limit=50`

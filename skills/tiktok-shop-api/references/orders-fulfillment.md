@@ -163,6 +163,13 @@ UNPAID → ON_HOLD → AWAITING_SHIPMENT → AWAITING_COLLECTION → IN_TRANSIT 
 - If seller takes no action → platform may auto-approve the cancellation.
 - Seller can reject by successfully shipping the package (in some markets).
 
+**Approve Cancellation:**
+`POST /order/202309/orders/{order_id}/cancellations/accept`
+
+**Reject Cancellation:**
+`POST /order/202309/orders/{order_id}/cancellations/reject`
+Requires a `reject_reason` in the request body.
+
 **Seller-Initiated:**
 - Seller cancels directly (e.g., stock unavailable).
 - Order transitions to `CANCELLED`.

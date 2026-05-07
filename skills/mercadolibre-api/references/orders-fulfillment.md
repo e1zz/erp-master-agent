@@ -212,15 +212,11 @@ Returns all orders belonging to the pack.
 }
 ```
 
-### 2. Get Shipping Label (PDF)
+### 2. Get Shipping Label (PDF / ZPL)
 
 `GET https://api.mercadolibre.com/shipment_labels?shipment_ids={SHIPMENT_ID}&response_type=pdf`
 
-Returns the PDF shipping label for printing. Only available for Mercado Envíos (me2) shipments.
-
-**Alternative (ZPL format for thermal printers):**
-
-`GET https://api.mercadolibre.com/shipment_labels?shipment_ids={SHIPMENT_ID}&response_type=zpl2`
+*(See the dedicated Shipping Labels section below for more details on query parameters and thermal printer formats).*
 
 ### 3. Shipment Status Transitions
 

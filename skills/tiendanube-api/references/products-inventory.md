@@ -21,6 +21,37 @@ Tiendanube structures catalogs with a parent-child relationship:
 `GET /products`
 Retrieve a paginated list of products and all their nested variants.
 
+### Get Single Product
+`GET /products/{product_id}`
+Returns full product details including images, categories, and all variants.
+
+### Create Product
+`POST /products`
+
+**Request Example:**
+```json
+{
+  "name": {"es": "Camiseta Algodón"},
+  "description": {"es": "Camiseta 100% algodón"},
+  "category_id": 12345,
+  "variants": [
+    {
+      "price": "299.00",
+      "stock": 10,
+      "sku": "SKU-TSHIRT-M",
+      "weight": "0.5"
+    }
+  ]
+}
+```
+
+### Create Variant for Existing Product
+`POST /products/{product_id}/variants`
+
+Adds a new variant (e.g., a new size) to an existing product.
+
+---
+
 ## 2. Inventory Updates (Single vs Bulk)
 
 ### Updating a Single Variant

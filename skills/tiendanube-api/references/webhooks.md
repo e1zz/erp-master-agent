@@ -14,6 +14,16 @@ Webhooks are configured via the API:
 You must provide your endpoint URL and the `event` name.
 *Note: Tiendanube explicitly blocks `localhost` URLs. Use a tunneling service like ngrok or PostCatcher for local development.*
 
+### Managing Subscriptions
+
+| Action | Endpoint | Description |
+|---|---|---|
+| **List Subscriptions** | `GET /v1/{store_id}/webhooks` | Returns all active webhooks |
+| **Create Subscription** | `POST /v1/{store_id}/webhooks` | Subscribe to an event |
+| **Delete Subscription** | `DELETE /v1/{store_id}/webhooks/{id}` | Unsubscribe from an event |
+
+---
+
 ## Core Events
 
 | Event Type | Description |

@@ -70,7 +70,29 @@ Every order includes a `payments[]` array with detailed payment information. Thi
 
 ---
 
-## 2. Mercado Pago Reports (Bulk Reconciliation)
+## 2. Refunding Payments
+
+To issue a full or partial refund for a specific payment, use the Mercado Pago refunds endpoint.
+
+`POST https://api.mercadopago.com/v1/payments/{payment_id}/refunds`
+
+**Headers Required:**
+- `Authorization: Bearer {ACCESS_TOKEN}`
+- `X-Idempotency-Key: {UUID}` (Required to prevent duplicate refunds)
+
+**Request Body (Partial Refund):**
+```json
+{
+  "amount": 50.00
+}
+```
+
+**Request Body (Full Refund):**
+Leave the body empty `{}` or omit the `amount` field to process a full refund for the remaining balance of the payment.
+
+---
+
+## 3. Mercado Pago Reports (Bulk Reconciliation)
 
 For bank-level reconciliation, MercadoLibre provides downloadable reports through the **Mercado Pago** platform. These reports break down gross sales, fees, refunds, and net payouts.
 

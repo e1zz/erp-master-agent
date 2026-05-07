@@ -65,7 +65,31 @@
 
 ---
 
-## 2. Get Order Items
+## 2. Get Single Order
+
+`GET /orders/v0/orders/{orderId}`
+
+Retrieve a single order by its Amazon-defined `orderId`. This is critical for webhook-triggered order refresh flows where you only receive an order ID.
+
+*Note: This endpoint returns high-level order information (status, totals). It does not return items, buyer info, or shipping address.*
+
+---
+
+## 3. Get Order PII (Buyer & Address)
+
+These endpoints **require a Restricted Data Token (RDT)** with specific data elements authorized.
+
+### Get Buyer Info
+`GET /orders/v0/orders/{orderId}/buyerInfo`
+Returns buyer name, email, and county.
+
+### Get Shipping Address
+`GET /orders/v0/orders/{orderId}/address`
+Returns the full shipping address.
+
+---
+
+## 4. Get Order Items
 
 `GET /orders/v0/orders/{orderId}/orderItems`
 
@@ -95,7 +119,7 @@ Returns the line items for a specific order, including ASIN, SKU, quantity, and 
 
 ---
 
-## 3. Confirm Shipment (CRITICAL)
+## 5. Confirm Shipment (CRITICAL)
 
 `POST /orders/v0/orders/{orderId}/shipment/confirm` *(newer endpoint)*
 
@@ -130,7 +154,7 @@ Submit a `POST_ORDER_FULFILLMENT_DATA` feed for confirming shipments on multiple
 
 ---
 
-## 4. Cancellations
+## 6. Cancellations
 
 ### Seller-Initiated Cancellation
 
@@ -142,7 +166,7 @@ Buyer cancellation requests arrive as `ORDER_CHANGE` notifications (see `webhook
 
 ---
 
-## 5. Returns
+## 7. Returns
 
 Amazon handles MFN returns via Seller Central or the Returns API:
 

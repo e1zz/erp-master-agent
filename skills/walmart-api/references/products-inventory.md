@@ -110,6 +110,14 @@ Retrieves a list of items from your seller catalog.
 }
 ```
 
+### 6. Create or Update Products (Item Setup)
+
+`POST /v3/feeds?feedType=item`
+
+Walmart manages product listings via the Feeds API. To create new products or update existing catalog details (title, description, images), you must upload an Item Setup feed payload (JSON or XML) matching the appropriate category specification.
+
+**Important:** Product creation is asynchronous. After posting the feed, you receive a `feedId`. You must poll `GET /v3/feeds/{feedId}` to determine if the products were successfully ingested or if there were validation errors.
+
 ## Inventory Paradigms: Seller-Fulfilled vs WFS
 
 Walmart distinguishes heavily between items you fulfill yourself and items fulfilled by Walmart.

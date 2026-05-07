@@ -12,14 +12,26 @@ Unlike MercadoLibre where webhooks are configured globally per App, Walmart subs
 
 You must configure an endpoint URL that can receive `POST` requests and respond with a `200 OK` status code quickly.
 
+### Managing Subscriptions via API
+
+| Action | Endpoint | Description |
+|---|---|---|
+| **List Subscriptions** | `GET /v3/settings/subscriptions` | Returns all active webhook subscriptions |
+| **Create Subscription** | `POST /v3/settings/subscriptions` | Create a new subscription for a specific event type |
+| **Delete Subscription**| `DELETE /v3/settings/subscriptions/{subscriptionId}` | Removes a subscription |
+
 ## Critical Events
 
 | Event Type | Description |
 |---|---|
 | `PO_CREATED` | A new purchase order has been created. (Triggers your acknowledgment worker). |
 | `PO_UPDATED` | An order's status has changed (e.g., Walmart canceled it, or WFS shipped it). |
+| `RETURN_CREATED` | A new return request was initiated. |
+| `RETURN_UPDATED` | A return's status changed (e.g., delivered, refunded). |
 | `ITEM_PUBLISHED` | An item's status changed to published. |
 | `ITEM_UNPUBLISHED` | An item was unpublished. |
+| `INVENTORY_UPDATE` | Inventory levels were updated. |
+| `FEED_STATUS` | A bulk feed (item setup, inventory, etc.) finished processing. |
 
 ## Webhook Signature Verification (CRITICAL)
 

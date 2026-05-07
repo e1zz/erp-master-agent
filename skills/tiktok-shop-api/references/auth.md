@@ -149,7 +149,29 @@ sign = hmac_sha256(app_secret, sign_string).hex().lower()
 
 For global/cross-border sellers operating multiple shops, the `shop_cipher` is required to route API requests to the correct shop context.
 
-- Obtain `shop_cipher` values via the **Get Authorized Shops** endpoint.
+### Get Authorized Shops
+
+`GET https://open-api.tiktokglobalshop.com/authorization/202309/shops`
+
+Returns a list of all shops authorized by the access token, including their `shop_cipher`.
+
+**Response Fragment:**
+```json
+{
+  "code": 0,
+  "data": {
+    "shops": [
+      {
+        "id": "7492837492",
+        "name": "My Mexico Store",
+        "region": "MX",
+        "cipher": "ROW_xyz123abc"
+      }
+    ]
+  }
+}
+```
+
 - Always pass `shop_cipher` in the query string for shop-specific operations.
 - `shop_id` (plain) is used in webhooks; `shop_cipher` (encrypted) is used in API requests.
 

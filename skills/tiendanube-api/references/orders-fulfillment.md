@@ -30,7 +30,17 @@ An order in Tiendanube has multiple independent status fields:
 | `shipping_status` | Filter by fulfillment state |
 | `since_id` | Crucial for chronological ERP polling |
 
-## 2. Fulfillments and Tracking (CRITICAL)
+---
+
+## 2. Retrieve Single Order
+
+`GET /orders/{order_id}`
+
+Retrieves the full details of a specific order. Critical for webhook processing where only the `order_id` is received.
+
+---
+
+## 3. Fulfillments and Tracking (CRITICAL)
 
 In Tiendanube, tracking updates are NOT applied directly to the main Order object. Instead, they are applied to **Fulfillment Orders**. A single order can have multiple fulfillment orders if it is shipped in separate packages.
 
@@ -62,7 +72,9 @@ To mark an order as shipped and add a tracking number, you create a Tracking Eve
 
 *Note: Posting a `DELIVERED` event will automatically update the overarching fulfillment order and record the `fulfilled_at` date.*
 
-## 3. Canceling Orders
+---
+
+## 4. Canceling Orders
 
 `POST /orders/{order_id}/cancel`
 
@@ -78,7 +90,9 @@ Used to cancel an order.
 ```
 *Note: Setting `restock: true` will automatically add the inventory back to the variants.*
 
-## 4. Transactions (Payments)
+---
+
+## 5. Transactions (Payments)
 
 `GET /orders/{order_id}/transactions`
 
@@ -99,7 +113,9 @@ Returns the payment transactions associated with the order. Useful for determini
 ]
 ```
 
-## 5. Draft Orders (B2B / Manual Creation)
+---
+
+## 6. Draft Orders (B2B / Manual Creation)
 
 `POST /draft_orders`
 

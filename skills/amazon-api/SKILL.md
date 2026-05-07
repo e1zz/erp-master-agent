@@ -15,5 +15,6 @@ This skill provides Amazon SP-API specific API references, payloads, and local E
 - [Products and Inventory](./references/products-inventory.md)
 - [Orders and Fulfillment](./references/orders-fulfillment.md)
 - [Webhooks](./references/webhooks.md)
+- [Financials](./references/financials.md)
 
 Read the smallest reference that matches the task before looking elsewhere.
