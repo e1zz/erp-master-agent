@@ -81,15 +81,37 @@ _KPIs: OTDR > 80%, LDR < 4%_
 
 Search Orders (`POST /order/202309/orders/search`):
 ```json
-{ "order_status": "UNPAID", "create_time_ge": 1623812664, "shipping_type": "TIKTOK" }
+{ "order_status": "UNPAID", "create_time_from": 1623812664, "sort_by": "CREATE_TIME" }
 ```
 
-Logistics Providers (`GET /logistics/202309/delivery_options/{delivery_option_id}/shipping_providers`)
+Get Order Detail (`POST /order/202309/orders`) — batch up to 50 IDs
+Get Order Price Detail (`GET /order/202309/orders/{order_id}/price`)
 
-Order Cancellation (`POST /return_refund/202309/cancellations`):
-```json
-{ "order_id": "577087614418520388", "skus": [{"sku_id": "1729386416015578024", "quantity": 1}], "cancel_reason": "ecom_order_delivered_refund_and_return_reason_wrong_product_seller" }
-```
+**Fulfillment:**
+Ship Package (`POST /fulfillment/202309/packages/{package_id}/ship`)
+Mark as Shipped (`POST /fulfillment/202309/orders/{order_id}/packages`) — US/EMEA
+Get Package Detail (`GET /fulfillment/202309/packages/{package_id}`)
+Get Handover Slots (`GET /fulfillment/202309/packages/{package_id}/handover_time_slots`)
+Get Shipping Label (`GET /fulfillment/202309/packages/{package_id}/shipping_document`)
+Combine Packages (`POST /fulfillment/202309/packages/combine`)
+
+**Cancellations:**
+Cancel Order (`POST /return_refund/202309/cancellations`)
+Search Cancellations (`POST /return_refund/202309/cancellations/search`)
+Approve Cancellation (`POST /return_refund/202309/cancellations/approve`)
+Reject Cancellation (`POST /return_refund/202309/cancellations/reject`)
+
+**Returns & Refunds:**
+Search Returns (`POST /return_refund/202309/returns/search`)
+Approve Return (`POST /return_refund/202309/returns/approve`)
+Reject Return (`POST /return_refund/202309/returns/reject`)
+Calculate Refund (`POST /return_refund/202309/refunds/calculate`)
+Get Aftersale Eligibility (`GET /return_refund/202309/aftersale/eligibility`)
+
+**Logistics:**
+Delivery Options (`GET /logistics/202309/delivery_options`)
+Shipping Providers (`GET /logistics/202309/delivery_options/{delivery_option_id}/shipping_providers`)
+Warehouses (`GET /logistics/202309/warehouses`)
 
 ### Webhooks (Event-Driven)
 - Delivery: HTTPS POST JSON to registered URL.

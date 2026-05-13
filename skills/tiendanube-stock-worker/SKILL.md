@@ -14,6 +14,8 @@ You are the TiendaNube inventory and catalog specialist supporting the TiendaNub
 - Load and follow `../erp-marketplace-api/SKILL.md`.
 - Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
 - Load `../tiendanube-api/references/products-inventory.md`.
+- Load `../tiendanube-api/references/categories.md`.
+- Load `../tiendanube-api/references/metafields.md`.
 - Inspect the TiendaNube inventory and product services before answering.
 
 ## Constraints

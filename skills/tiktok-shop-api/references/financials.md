@@ -10,119 +10,99 @@
 
 **Base URL:** `https://open-api.tiktokglobalshop.com`
 
-### 1. Search Statements (Daily Settlements)
+### 1. Get Statements (Settlements)
 
-`POST /finance/202309/statements/search`
+`GET /finance/202309/statements`
 
-Retrieves a list of daily statements (settlements). Statements aggregate all settled transactions for a specific day.
+Retrieves a list of statements (settlements). Statements aggregate all settled transactions for a specific period.
 
-**Request Body Example:**
-```json
-{
-  "page_size": 50,
-  "page_token": "",
-  "statement_time_from": 1690000000,
-  "statement_time_to": 1695000000,
-  "sort_by": "STATEMENT_TIME",
-  "sort_type": "DESC"
-}
-```
+**Query Parameters:**
+- `sort_field` (Required): Must be `statement_time`.
+- `sort_order` (Optional): `ASC` or `DESC`.
+- `page_size` (Optional): Results per page (max 100, default 20).
+- `page_token` (Optional): Cursor for pagination.
+- `statement_time_ge` / `statement_time_lt` (Optional): Unix timestamps to filter by statement time.
+- `payment_status` (Optional): Filter by status (`PAID`, `FAILED`, `PROCESSING`).
 
-**Response Example:**
-```json
-{
-  "code": 0,
-  "data": {
-    "statements": [
-      {
-        "id": "STMT_123456789",
-        "statement_time": 1690000000,
-        "settlement_amount": "1500.00",
-        "currency": "MXN",
-        "status": "SETTLED"
-      }
-    ],
-    "next_page_token": "cursor456",
-    "total_count": 50
-  }
-}
-```
+**Response Example Summary:**
+Returns a list of statements containing `id`, `statement_time`, `currency`, and `payment_status`.
 
-### 2. Search Statement Transactions
+### 2. Get Payments
 
-`POST /finance/202309/statements/{statement_id}/statement_transactions/search`
+`GET /finance/202309/payments`
 
-Retrieves the detailed, order-level or SKU-level transactions that make up a specific statement.
+Retrieves payment records.
 
-**Request Body Example:**
-```json
-{
-  "page_size": 100,
-  "page_token": ""
-}
-```
+**Query Parameters:**
+- `sort_field` (Required): Must be `create_time`.
+- `sort_order` (Optional): `ASC` or `DESC`.
+- `page_size` (Optional): Results per page (max 100).
+- `page_token` (Optional): Cursor for pagination.
+- `create_time_ge` / `create_time_lt` (Optional): Unix timestamps.
 
-**Response Example:**
-```json
-{
-  "code": 0,
-  "data": {
-    "statement_transactions": [
-      {
-        "id": "TXN_987654321",
-        "order_id": "576123456789",
-        "type": "ORDER_SETTLEMENT",
-        "amount": "250.00",
-        "currency": "MXN",
-        "fee_details": [
-          {
-            "fee_type": "PLATFORM_COMMISSION",
-            "fee_amount": "-25.00"
-          },
-          {
-            "fee_type": "PAYMENT_FEE",
-            "fee_amount": "-5.00"
-          },
-          {
-            "fee_type": "SHIPPING_FEE_SUBSIDY",
-            "fee_amount": "10.00"
-          }
-        ]
-      }
-    ],
-    "next_page_token": "cursor789",
-    "total_count": 100
-  }
-}
-```
+**Response Example Summary:**
+Returns a list of payments containing `id`, `amount`, `currency`, `payment_time`, and `status`.
 
-### 3. Get Transactions by Order
+### 3. Get Withdrawals
 
-`GET /finance/202309/orders/{order_id}/statement_transactions`
-
-Retrieves all financial transactions associated with a specific order, regardless of which statement they belong to. Useful for order profitability analysis.
-
-### 4. Search Withdrawals (Payouts)
-
-`POST /finance/202309/withdrawals/search`
+`GET /finance/202309/withdrawals`
 
 Retrieves the actual payouts (fund transfers) to the seller's bank account.
 
-**Response Fragment:**
-```json
-{
-  "withdrawals": [
-    {
-      "id": "WD_123456",
-      "amount": "10000.00",
-      "currency": "MXN",
-      "status": "COMPLETED",
-      "create_time": 1690000000,
-      "bank_account_tail": "1234"
-    }
-  ]
-}
-```
+**Query Parameters:**
+- `types` (Required): Array of transaction types (e.g., `WITHDRAW`, `SETTLE`, `TRANSFER`, `REVERSE`).
+- `sort_field` (Required): Must be `create_time`.
+- `sort_order` (Optional): `ASC` or `DESC`.
+- `page_size` (Optional): Results per page.
+- `page_token` (Optional): Cursor for pagination.
+- `create_time_ge` / `create_time_lt` (Optional): Unix timestamps.
+
+**Response Example Summary:**
+Returns a list of withdrawals containing `id`, `amount`, `currency`, `create_time`, `status`, and `type`.
+
+### 4. Get Transactions by Order
+
+`GET /finance/202501/orders/{order_id}/statement_transactions`
+
+Retrieves a consolidated view of an order's financial data. Useful for order profitability analysis.
+
+**Query Parameters:**
+- `page_size` (Optional): Results per page.
+- `page_token` (Optional): Cursor for pagination.
+
+**Response Example Summary:**
+Returns an object including `revenue_amount`, `fee_and_tax_amount`, `settlement_amount`, and a detailed `sku_transactions` list.
+
+### 5. Get Transactions by Statement
+
+`GET /finance/202501/statements/{statement_id}/statement_transactions`
+
+Retrieves a list of transactions linked to a specific statement.
+
+**Query Parameters:**
+- `sort_field` (Required): Must be `order_create_time`.
+- `sort_order` (Optional): `ASC` or `DESC`.
+- `page_size` (Optional): Results per page.
+- `page_token` (Optional): Cursor for pagination.
+
+**Response Example Summary:**
+Returns a list of transactions providing `order_id`, `revenue_amount`, `shipping_cost_amount`, and `settlement_amount`.
+
+### 6. Get Unsettled Transactions
+
+`GET /finance/202507/orders/unsettled`
+
+Retrieves a list of transactions that have not yet been settled (e.g., pending completion or warranty periods).
+
+**Query Parameters:**
+- `sort_field` (Required): Must be `order_create_time`.
+- `sort_order` (Optional): `ASC` or `DESC`.
+- `page_size` (Optional): Results per page.
+- `page_token` (Optional): Cursor for pagination.
+- `search_time_ge` / `search_time_lt` (Optional): Unix timestamps.
+
+**Response Example Summary:**
+Returns a list of unsettled transactions including `order_id`, `currency`, and estimated `settlement_amount`.
 
 ## Financial Lifecycle & Settlement Logic
 

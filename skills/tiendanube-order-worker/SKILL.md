@@ -15,6 +15,10 @@ You are the TiendaNube order and webhook specialist supporting the TiendaNube Ex
 - Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
 - Load `../tiendanube-api/references/orders-fulfillment.md`.
 - Load `../tiendanube-api/references/webhooks.md`.
+- Load `../tiendanube-api/references/customers.md`.
+- Load `../tiendanube-api/references/custom-fields.md`.
+- Load `../tiendanube-api/references/discounts-coupons.md`.
+- Load `../tiendanube-api/references/shipping-carriers.md`.
 - Inspect the TiendaNube order, fulfillment, and webhook code before answering.
 
 ## Constraints

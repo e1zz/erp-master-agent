@@ -3,88 +3,234 @@
 ## Use When
 
 - Setting up real-time event listeners for Tiendanube stores.
+- Managing webhook subscriptions (CRUD operations).
 - Implementing HMAC-SHA256 signature validation.
-- Handling order creations, updates, or product changes.
+- Handling order, product, fulfillment, or customer changes.
 
-## Subscribing to Webhooks
+## API References
 
-Webhooks are configured via the API:
-`POST /v1/{store_id}/webhooks`
+**Base URL:** `https://api.tiendanube.com/v1/{store_id}`
+**Headers Required:** `Authentication`, `User-Agent`
 
-You must provide your endpoint URL and the `event` name.
-*Note: Tiendanube explicitly blocks `localhost` URLs. Use a tunneling service like ngrok or PostCatcher for local development.*
+## 1. Webhook CRUD Endpoints
 
-### Managing Subscriptions
+### GET /webhooks — List All Webhooks
+`GET /webhooks`
 
-| Action | Endpoint | Description |
-|---|---|---|
-| **List Subscriptions** | `GET /v1/{store_id}/webhooks` | Returns all active webhooks |
-| **Create Subscription** | `POST /v1/{store_id}/webhooks` | Subscribe to an event |
-| **Delete Subscription** | `DELETE /v1/{store_id}/webhooks/{id}` | Unsubscribe from an event |
+Returns all webhooks registered for your application.
 
----
+**Query Parameters:** `since_id`, `created_at_min`, `created_at_max`, `updated_at_min`, `updated_at_max`.
 
-## Core Events
+**Response Example:**
+```json
+[
+  {
+    "id": 101,
+    "event": "app/uninstalled",
+    "url": "https://myapp.com/uninstall",
+    "created_at": "2013-01-03T09:11:51-03:00",
+    "updated_at": "2013-03-11T09:14:11-03:00"
+  },
+  {
+    "id": 5670,
+    "event": "order/created",
+    "url": "https://myapp.com/order_created_hook",
+    "created_at": "2013-04-07T09:11:51-03:00",
+    "updated_at": "2013-04-08T11:11:51-03:00"
+  }
+]
+```
 
-| Event Type | Description |
-|---|---|
-| `order/created` | Fired when a checkout is completed. |
-| `order/updated` | Fired when payment/shipping status changes. |
-| `product/created` | Fired when a merchant creates a product. |
-| `product/updated` | Fired when stock, price, or details change. |
-| `app/suspended` | App is disabled (usually due to store non-payment). |
-| `app/resumed` | App access restored. |
+### GET /webhooks/{id} — Get Single Webhook
+`GET /webhooks/{id}`
 
-## Webhook Signature Verification (CRITICAL)
+### POST /webhooks — Create Webhook
+`POST /webhooks` → `201 Created`
 
-To prevent spoofing, Tiendanube signs webhook payloads. You must verify the signature before processing.
-
-### 1. Extract Header
-
-The signature is sent in the header:
-`X-LinkedStore-HMAC-SHA256` 
-*(In PHP, this is usually found in `$_SERVER['HTTP_X_LINKEDSTORE_HMAC_SHA256']`)*
-
-### 2. Verification Logic
-
-You must generate an HMAC-SHA256 hash using your application's `client_secret` against the **exact raw unparsed HTTP body**.
+**Request Example:**
+```json
+{
+  "event": "product/created",
+  "url": "https://myapp.com/product_created_hook"
+}
+```
 
 > [!WARNING]
-> Do NOT use a parsed JSON object to generate the signature. If the framework automatically formats or strips whitespace from the body before you hash it, the signature will fail validation.
+> Tiendanube blocks `localhost` and `tiendanube`/`nuvemshop` domain URLs. Use a tunneling service (ngrok, RequestCatcher) for local development.
+
+### PUT /webhooks/{id} — Update Webhook
+`PUT /webhooks/{id}` → `200 OK`
+
+### DELETE /webhooks/{id} — Remove Webhook
+`DELETE /webhooks/{id}` → `200 OK` with `{}`
+
+## 2. Complete Event List
+
+### App Events
+| Event | Payload | Description |
+|---|---|---|
+| `app/uninstalled` | `id` (app ID) | App uninstalled |
+| `app/suspended` | — | API access suspended (store non-payment) |
+| `app/resumed` | — | API access restored |
+
+### Order Events
+| Event | Payload | Description |
+|---|---|---|
+| `order/created` | `id` (order ID) | Checkout completed |
+| `order/updated` | `id` | Payment/shipping status change |
+| `order/paid` | `id` | Order marked as paid |
+| `order/packed` | `id` | Order packed |
+| `order/fulfilled` | `id` | Order delivered |
+| `order/cancelled` | `id` | Order cancelled |
+| `order/edited` | `id` | Order products/amounts modified |
+| `order/pending` | `id` | Payment pending |
+| `order/voided` | `id` | Order voided |
+| `order/custom_fields_updated` | `id` | Custom fields changed |
+
+### Product Events
+| Event | Payload | Description |
+|---|---|---|
+| `product/created` | `id` (product ID) | Product created |
+| `product/updated` | `id` | Stock, price, or details changed |
+| `product/deleted` | `id` | Product removed |
+
+### Category Events
+| Event | Payload | Description |
+|---|---|---|
+| `category/created` | `id` | Category created |
+| `category/updated` | `id` | Category updated |
+| `category/deleted` | `id` | Category deleted |
+
+### Customer Events
+| Event | Payload | Description |
+|---|---|---|
+| `customer/created` | `id`, `event_launch_ts` | Customer created |
+| `customer/updated` | `id`, `event_launch_ts` | Customer updated |
+| `customer/deleted` | `id`, `event_launch_ts` | Customer deleted |
+
+### Domain Events
+| Event | Payload | Description |
+|---|---|---|
+| `domain/updated` | *(none)* | Store domain changed. Refer to Store resource. |
+
+### Custom Field Events
+| Event | Payload | Description |
+|---|---|---|
+| `order_custom_field/created` | `id` | Order custom field created |
+| `order_custom_field/updated` | `id` | Order custom field updated |
+| `order_custom_field/deleted` | `id` | Order custom field deleted |
+| `product_variant/custom_fields_updated` | `id` (variant ID) | Variant custom fields changed |
+| `product_variant_custom_field/created` | `id` | Variant custom field created |
+| `product_variant_custom_field/updated` | `id` | Variant custom field updated |
+| `product_variant_custom_field/deleted` | `id` | Variant custom field deleted |
+
+### Fulfillment Order Events
+| Event | Payload | Description |
+|---|---|---|
+| `fulfillment_order/status_updated` | `order_id`, `fulfillment_id` (ULID), `status` | Fulfillment status changed |
+| `fulfillment_order/tracking_event_created` | `order_id`, `fulfillment_id`, `tracking_event_id`, `status` | Tracking event added |
+| `fulfillment_order/tracking_event_updated` | `order_id`, `fulfillment_id`, `tracking_event_id`, `status` | Tracking event modified |
+| `fulfillment_order/tracking_event_deleted` | `order_id`, `fulfillment_id`, `tracking_event_id`, `status` | Tracking event removed |
+
+### Location Events
+| Event | Payload | Description |
+|---|---|---|
+| `location/created` | `id` | Warehouse location created |
+| `location/updated` | `id` | Location updated |
+| `location/deleted` | `id` | Location deleted |
+
+### Billing Events
+| Event | Payload | Description |
+|---|---|---|
+| `subscription/updated` | `concept_code`, `service_id`, `event_launch_ts` | Billing subscription changed |
+
+### Webhook Payload Structure
+Every webhook sends: `store_id` (received as `user_id` at auth) and `event` name, plus event-specific fields above.
+
+```json
+{ "store_id": 123, "event": "product/created", "id": 1948209 }
+```
+
+## 3. Webhook Signature Verification (CRITICAL)
+
+### Extract Header
+`X-LinkedStore-HMAC-SHA256`
+*(In PHP: `$_SERVER['HTTP_X_LINKEDSTORE_HMAC_SHA256']`)*
+
+### Verification Logic
+
+Generate HMAC-SHA256 hash using your `client_secret` against the **exact raw unparsed HTTP body**.
+
+> [!WARNING]
+> Do NOT use a parsed JSON object. If the framework formats or strips whitespace before hashing, the signature will fail.
 
 **PHP Example:**
-
 ```php
 public function verifyTiendanubeWebhook(Request $request, string $clientSecret): bool
 {
-    // 1. Get the signature from the header
     $receivedSignature = $request->header('X-LinkedStore-HMAC-SHA256');
-
-    if (!$receivedSignature) {
-        return false;
-    }
-
-    // 2. Get the EXACT RAW body payload. 
-    // In standard PHP: $payload = file_get_contents('php://input');
-    // In Laravel: $payload = $request->getContent();
+    if (!$receivedSignature) { return false; }
     $rawPayload = $request->getContent();
-
-    // 3. Calculate the HMAC using your Client Secret
     $expectedSignature = hash_hmac('sha256', $rawPayload, $clientSecret);
-
-    // 4. Use a timing-safe string comparison
     return hash_equals($expectedSignature, $receivedSignature);
 }
 ```
 
-## Idempotency and Delivery Guarantee
+## 4. Delivery, Retries, and Idempotency
 
-1. **Fast Response:** You must respond with a `2xx` status code within **3 seconds**. If you take longer, Tiendanube will assume a timeout and retry the delivery later.
-2. **Queueing:** Because of the 3-second limit, do NOT process complex ERP logic synchronously. Save the raw payload to a queue (Redis/RabbitMQ/DB) and return `200 OK` immediately.
-3. **Retries:** Tiendanube has an aggressive retry policy for failed deliveries. Ensure your worker logic is idempotent (e.g., ignore the event if the order ID is already processed).
+### Fast Response
+Respond with `2xx` within **3 seconds**. Queue complex logic and return `200 OK` immediately.
 
-## Error Handling
-If the store's monthly subscription expires, API access is suspended. During this time, webhooks will NOT be fired. Listen to the `app/resumed` event to trigger a full resync of orders/products that were missed during the downtime.
+### Retry Policy
+- First 4 retries: immediately, ~5min, ~10min, ~15min
+- Then exponential backoff (×1.4) over 48 hours
+- Up to **18 total attempts**
+
+### Message Ordering and Deduplication
+Messages are processed via a distributed system — order is **not guaranteed**.
+
+**Deduplication Rules:**
+- Identical message bodies → treat as **unique**
+- Identical content but different attributes → treat as **unique**
+- Different content (e.g., retry counts in body) → treat as **duplicates**
+
+Ensure your worker logic is **idempotent** (e.g., ignore event if order ID already processed).
+
+## 5. Required LGPD/Data Protection Webhooks
+
+These webhooks are **mandatory** for data protection compliance (e.g., Brazil's LGPD).
+
+### store/redact
+Sent after merchant uninstalls your app. Delete their data.
+```json
+{ "store_id": 123 }
+```
+
+### customers/redact
+Request to erase consumer information. Sent 5 days after uninstall (or 6 months after last order).
+```json
+{
+  "store_id": 123,
+  "customer": { "id": 1, "email": "email@email.com", "phone": "+55...", "identification": "..." },
+  "orders_to_redact": [213, 3415, 21515]
+}
+```
+
+### customers/data_request
+Request for customer data report. App must send info directly to merchant.
+```json
+{
+  "store_id": 123,
+  "customer": { "id": 1, "email": "email@email.com", "phone": "+55...", "identification": "..." },
+  "orders_requested": [213, 3415],
+  "checkouts_requested": [214, 3416],
+  "drafts_orders_requested": [10, 1245],
+  "data_request": { "id": 456 }
+}
+```
+
+## 6. Error Handling
+If the store's subscription expires, API access is suspended and webhooks will NOT fire. Listen to `app/resumed` to trigger a full resync.
 
 ## Local Repo Anchors
 

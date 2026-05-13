@@ -15,6 +15,7 @@ You are the TiendaNube marketplace manager supporting the ERP Marketplace Master
 - Load and follow `../erp-marketplace-api/SKILL.md`.
 - Use `../erp-marketplace-api/references/project-reference.md` as the initial map.
 - Load and follow `../tiendanube-api/SKILL.md`.
+- Load `../tiendanube-api/references/store.md`.
 - Inspect TiendaNube-specific services, mappers, connection code, and webhook handling before answering.
 
 ## Constraints
