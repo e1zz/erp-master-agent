@@ -319,7 +319,7 @@ function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
   fs.writeFileSync(mainFile, mainLines.join('\n') + '\n', 'utf8');
 
   // Scoped instruction files per marketplace
-  const marketplaces = ['amazon', 'walmart', 'mercadolibre', 'tiktok', 'tiendanube'];
+  const marketplaces = ['amazon', 'walmart', 'mercadolibre', 'tiktok', 'tiendanube', 'shopify'];
   for (const mp of marketplaces) {
     const scopedFile = path.join(instructionsDir, `${mp}.instructions.md`);
     const scopedContent = [
@@ -339,7 +339,7 @@ function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
   }
 
   console.log('  Generated .github/copilot-instructions.md');
-  console.log('  Generated .github/instructions/ (5 scoped rules)');
+  console.log(`  Generated .github/instructions/ (${marketplaces.length} scoped rules)`);
 }
 
 // ---------------------------------------------------------------------------
@@ -383,6 +383,7 @@ function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
     { name: 'mercadolibre', glob: '**/*mercadolibre*/**,**/*MercadoLibre*/**' },
     { name: 'tiktok', glob: '**/*tiktok*/**,**/*TikTok*/**' },
     { name: 'tiendanube', glob: '**/*tiendanube*/**,**/*TiendaNube*/**,**/*nuvemshop*/**' },
+    { name: 'shopify', glob: '**/*shopify*/**,**/*Shopify*/**' },
   ];
 
   for (const mp of marketplaces) {
@@ -407,7 +408,7 @@ function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
     fs.writeFileSync(path.join(cursorRulesDir, `${mp.name}.mdc`), content, 'utf8');
   }
 
-  console.log('  Generated .cursor/rules/ (6 scoped .mdc files)');
+  console.log(`  Generated .cursor/rules/ (${marketplaces.length + 1} scoped .mdc files)`);
 }
 
 // ---------------------------------------------------------------------------
@@ -444,7 +445,7 @@ function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
   fs.writeFileSync(path.join(wsRulesDir, 'erp-core.md'), globalRule, 'utf8');
 
   // Per-marketplace rules (model-decision activation)
-  const marketplaces = ['amazon', 'walmart', 'mercadolibre', 'tiktok', 'tiendanube'];
+  const marketplaces = ['amazon', 'walmart', 'mercadolibre', 'tiktok', 'tiendanube', 'shopify'];
 
   for (const mp of marketplaces) {
     const content = [
@@ -467,7 +468,7 @@ function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
     fs.writeFileSync(path.join(wsRulesDir, `${mp}.md`), content, 'utf8');
   }
 
-  console.log('  Generated .windsurf/rules/ (6 scoped .md files)');
+  console.log(`  Generated .windsurf/rules/ (${marketplaces.length + 1} scoped .md files)`);
 }
 
 // ---------------------------------------------------------------------------

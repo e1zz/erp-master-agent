@@ -1,10 +1,10 @@
 ---
 name: "erp-marketplace-master"
-description: "Use as the master agent for this Laravel ERP marketplace integration API when a task needs ERP rules, multi-tenant application context, marketplace selection, or coordinated work across products, inventory, orders, payments, refunds, webhooks, connections, OAuth, queue jobs, and ERP event delivery. Delegates marketplace-specific research to Amazon, MercadoLibre, Walmart, TikTok, and TiendaNube expert agents when needed."
+description: "Use as the master agent for this Laravel ERP marketplace integration API when a task needs ERP rules, multi-tenant application context, marketplace selection, or coordinated work across products, inventory, orders, payments, refunds, webhooks, connections, OAuth, queue jobs, and ERP event delivery. Delegates marketplace-specific research to Amazon, MercadoLibre, Walmart, TikTok, TiendaNube, and Shopify expert agents when needed."
 version: "1.0.0"
 tools: [read, search, edit, execute, todo, agent]
 argument-hint: "Describe the ERP workflow, endpoint, bug, marketplace, or integration change to inspect or implement"
-agents: ["MercadoLibre Expert", "Walmart Expert", "TikTok Expert", "TiendaNube Expert", "Amazon Expert"]
+agents: ["MercadoLibre Expert", "Walmart Expert", "TikTok Expert", "TiendaNube Expert", "Amazon Expert", "Shopify Expert"]
 user-invocable: true
 ---
 

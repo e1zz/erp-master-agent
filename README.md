@@ -10,7 +10,7 @@ Built following [harness engineering best practices](https://martinfowler.com/ar
 
 | Content | Description |
 |---|---|
-| **Skills** (24 skill folders) | Markdown-based domain knowledge for each marketplace: API contracts, auth flows, order/inventory/webhook behavior, and a master orchestrator. Each includes YAML frontmatter for auto-discovery. |
+| **Skills** (28 skill folders) | Markdown-based domain knowledge for each marketplace: API contracts, auth flows, order/inventory/webhook behavior, and a master orchestrator. Each includes YAML frontmatter for auto-discovery. |
 | **Rules** (5 rule files) | Agent behavior guidelines, auto-activation triggers, coding standards, feedback sensors, and architecture fitness constraints |
 | **IDE-specific files** | Generated per IDE: `CLAUDE.md`, `copilot-instructions.md`, scoped `.mdc` rules, `.cursorrules`, `.windsurfrules` |
 
@@ -79,7 +79,7 @@ npx erus-master-agent --ide antigravity
 ```
 your-project/
 ├── .agents/
-│   ├── skills/          ← 24 skill folders with SKILL.md files
+│   ├── skills/          ← 28 skill folders with SKILL.md files
 │   └── rules/           ← 5 rule files (guides + sensors)
 ```
 
@@ -107,7 +107,7 @@ npx erus-master-agent --ide claude
 your-project/
 ├── CLAUDE.md              ← Concise project instructions (<100 lines)
 ├── .claude/
-│   ├── skills/            ← 24 skill folders with SKILL.md files
+│   ├── skills/            ← 28 skill folders with SKILL.md files
 │   └── rules/             ← 5 rule files (guides + sensors)
 ```
 
@@ -143,7 +143,7 @@ your-project/
 │   │   ├── mercadolibre.instructions.md  ← Auto-activates on MercadoLibre files
 │   │   ├── tiktok.instructions.md        ← Auto-activates on TikTok files
 │   │   └── tiendanube.instructions.md    ← Auto-activates on TiendaNube files
-│   ├── skills/                           ← 24 skill folders
+│   ├── skills/                           ← 28 skill folders
 │   └── rules/                            ← 5 rule files
 ```
 
@@ -179,7 +179,7 @@ your-project/
 │   │   ├── mercadolibre.mdc    ← Auto-attached: triggers on MercadoLibre files
 │   │   ├── tiktok.mdc          ← Auto-attached: triggers on TikTok files
 │   │   └── tiendanube.mdc      ← Auto-attached: triggers on TiendaNube files
-│   ├── skills/                  ← 24 skill folders
+│   ├── skills/                  ← 28 skill folders
 │   └── rules/                   ← 5 rule files
 ```
 
@@ -220,7 +220,7 @@ your-project/
 │   │   ├── mercadolibre.md      ← Model-decision: activates for MercadoLibre tasks
 │   │   ├── tiktok.md            ← Model-decision: activates for TikTok tasks
 │   │   └── tiendanube.md        ← Model-decision: activates for TiendaNube tasks
-│   ├── skills/                  ← 24 skill folders
+│   ├── skills/                  ← 28 skill folders
 │   └── rules/                   ← 5 rule files (raw copies)
 ```
 
@@ -294,7 +294,7 @@ npx erus-master-agent --help                        # Show help
 
 ```
 erus-master-agent/
-├── skills/                    ← Canonical skill definitions (24 folders)
+├── skills/                    ← Canonical skill definitions (28 folders)
 │   ├── amazon-api/            ← API references + SKILL.md with frontmatter
 │   ├── amazon-expert/         ← Marketplace coordinator agent
 │   ├── amazon-order-worker/   ← Order/webhook specialist
@@ -324,6 +324,7 @@ erus-master-agent/
 | **ERP Core** | `erp-marketplace-api`, `erp-marketplace-master`, `skill-auditor` |
 | **Amazon** | `amazon-api`, `amazon-expert`, `amazon-order-worker`, `amazon-stock-worker` |
 | **MercadoLibre** | `mercadolibre-api`, `mercadolibre-expert`, `mercadolibre-order-worker`, `mercadolibre-stock-worker` |
+| **Shopify** | `shopify-api`, `shopify-expert`, `shopify-order-worker`, `shopify-stock-worker` |
 | **TikTok Shop** | `tiktok-shop-api`, `tiktok-expert`, `tiktok-finance-worker`, `tiktok-order-worker`, `tiktok-stock-worker` |
 | **TiendaNube** | `tiendanube-api`, `tiendanube-expert`, `tiendanube-order-worker`, `tiendanube-stock-worker` |
 | **Walmart** | `walmart-api`, `walmart-expert`, `walmart-order-worker`, `walmart-stock-worker` |
@@ -334,6 +335,7 @@ erus-master-agent/
 erp-marketplace-master (orchestrator)
 ├── amazon-expert → amazon-order-worker, amazon-stock-worker
 ├── mercadolibre-expert → mercadolibre-order-worker, mercadolibre-stock-worker
+├── shopify-expert → shopify-order-worker, shopify-stock-worker
 ├── tiktok-expert → tiktok-order-worker, tiktok-stock-worker, tiktok-finance-worker
 ├── tiendanube-expert → tiendanube-order-worker, tiendanube-stock-worker
 └── walmart-expert → walmart-order-worker, walmart-stock-worker
