@@ -10,6 +10,7 @@
 ## API References
 
 **Standard version:** `2025-10`
+**Documentation:** [Shopify Webhook REST Admin API](https://shopify.dev/docs/api/admin-rest/latest/resources/webhook)
 
 ### Major Endpoints:
 - `GET /admin/api/2025-10/webhooks.json` (List subscriptions)
