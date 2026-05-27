@@ -32,13 +32,12 @@ This project implements a structured agent harness based on the [feedforward + f
 
 ### Sensors (Feedback) — Self-Correct After Acting
 
-| Sensor | Defined In |
-|---|---|
-| PHP syntax check (`php -l`) | `rules/feedback-sensors.md` |
-| Scoped test execution | `rules/feedback-sensors.md` |
-| Static analysis (PHPStan) | `rules/feedback-sensors.md` |
-| Route verification | `rules/feedback-sensors.md` |
-| Diff review (inferential) | `rules/feedback-sensors.md` |
+| Sensor | PHP | Node.js | Python |
+|---|---|---|---|
+| Syntax/Lint | `php -l` | `eslint` | `ruff` / `py_compile` |
+| Scoped test execution | `php artisan test` | `jest` / `vitest` | `pytest` |
+| Static analysis | `phpstan` | `tsc --noEmit` | `mypy` |
+| Route verification | `php artisan route:list` | *(framework-specific)* | *(framework-specific)* |
 
 ### The Steering Loop
 
@@ -46,7 +45,7 @@ When a sensor catches the same issue more than twice, update the harness:
 
 1. Add a new rule in `rules/` to prevent the issue (feedforward)
 2. Add a new check in `rules/feedback-sensors.md` to catch it (feedback)
-3. Run `npx erus-master-agent` to propagate the fix to all IDE targets
+3. Run `npx erp-master-agent` to propagate the fix to all IDE targets
 
 This is how the harness improves over time — every recurring mistake becomes a permanent guard.
 
@@ -57,10 +56,24 @@ This is how the harness improves over time — every recurring mistake becomes a
 Run this from the root of your target project:
 
 ```bash
-npx erus-master-agent
+npx erp-master-agent --detect
 ```
 
-This installs skills, rules, and IDE-specific harness files into **all** supported targets at once.
+This auto-detects your project's language (PHP, Python, or Node.js) and installs skills, rules, and IDE-specific harness files into **all** supported targets at once.
+
+---
+
+## Language Profiles
+
+The harness supports multiple programming languages through profiles. The marketplace API knowledge is language-agnostic, but the feedback sensors and architecture constraints adapt to your stack.
+
+| Flag | Behavior |
+|---|---|
+| (no flag) | Installs **language-agnostic** rules only. No framework-specific lint or test commands are generated. |
+| `--detect` | Auto-detects the language based on files like `composer.json`, `package.json`, or `pyproject.toml`. |
+| `--lang php` | Installs PHP/Laravel-specific architecture rules and feedback sensors. |
+| `--lang python` | Installs Python-specific architecture rules and feedback sensors (`pytest`, `mypy`). |
+| `--lang node` | Installs Node.js/TypeScript-specific architecture rules and feedback sensors (`jest`, `eslint`, `tsc`). |
 
 ---
 
@@ -71,7 +84,7 @@ This installs skills, rules, and IDE-specific harness files into **all** support
 **Preset**: `antigravity`, `gemini`, or `agents`
 
 ```bash
-npx erus-master-agent --ide antigravity
+npx erp-master-agent --ide antigravity
 ```
 
 **What gets created:**
@@ -98,7 +111,7 @@ your-project/
 **Preset**: `claude`
 
 ```bash
-npx erus-master-agent --ide claude
+npx erp-master-agent --ide claude
 ```
 
 **What gets created:**
@@ -128,7 +141,7 @@ your-project/
 **Preset**: `vscode`, `copilot`, or `github`
 
 ```bash
-npx erus-master-agent --ide vscode
+npx erp-master-agent --ide vscode
 ```
 
 **What gets created:**
@@ -163,7 +176,7 @@ The installer generates both: a concise always-on file with architecture rules, 
 **Preset**: `cursor`
 
 ```bash
-npx erus-master-agent --ide cursor
+npx erp-master-agent --ide cursor
 ```
 
 **What gets created:**
@@ -204,7 +217,7 @@ your-project/
 **Preset**: `windsurf`
 
 ```bash
-npx erus-master-agent --ide windsurf
+npx erp-master-agent --ide windsurf
 ```
 
 **What gets created:**
@@ -239,7 +252,7 @@ your-project/
 ### Custom / Other IDEs
 
 ```bash
-npx erus-master-agent --target-dir .my-agent/skills
+npx erp-master-agent --target-dir .my-agent/skills
 ```
 
 > **Note:** `--target-dir` only installs skills (not rules or IDE-specific files). Copy `rules/` manually if needed.
@@ -249,8 +262,8 @@ npx erus-master-agent --target-dir .my-agent/skills
 ### Multiple IDEs at Once
 
 ```bash
-npx erus-master-agent --ide claude --ide cursor
-npx erus-master-agent --ide all
+npx erp-master-agent --ide claude --ide cursor
+npx erp-master-agent --ide all
 ```
 
 ---
@@ -258,8 +271,8 @@ npx erus-master-agent --ide all
 ## Preview Before Installing
 
 ```bash
-npx erus-master-agent --dry-run
-npx erus-master-agent --ide cursor --dry-run
+npx erp-master-agent --dry-run
+npx erp-master-agent --ide cursor --dry-run
 ```
 
 ---
@@ -267,7 +280,7 @@ npx erus-master-agent --ide cursor --dry-run
 ## Install Into Another Project
 
 ```bash
-npx erus-master-agent --repo /path/to/other-project --ide claude
+npx erp-master-agent --repo /path/to/other-project --ide claude
 ```
 
 ---
@@ -275,17 +288,21 @@ npx erus-master-agent --repo /path/to/other-project --ide claude
 ## Command Reference
 
 ```bash
-npx erus-master-agent                              # Install to all IDE targets
-npx erus-master-agent --ide claude                  # Claude Code only
-npx erus-master-agent --ide vscode                  # VS Code Copilot only
-npx erus-master-agent --ide cursor                  # Cursor only
-npx erus-master-agent --ide windsurf                # Windsurf only
-npx erus-master-agent --ide antigravity             # Antigravity / Gemini only
-npx erus-master-agent --ide cursor --ide claude     # Multiple IDEs
-npx erus-master-agent --target-dir .custom/skills   # Custom directory
-npx erus-master-agent --repo /path/to/project       # Different project root
-npx erus-master-agent --dry-run                     # Preview only
-npx erus-master-agent --help                        # Show help
+npx erp-master-agent                              # Language-agnostic, all IDE targets
+npx erp-master-agent --detect                     # Auto-detect language, all IDE targets
+npx erp-master-agent --lang php                   # Force PHP profile
+npx erp-master-agent --lang python                # Force Python profile
+npx erp-master-agent --lang node                  # Force Node.js profile
+npx erp-master-agent --ide claude                 # Claude Code only
+npx erp-master-agent --ide vscode                 # VS Code Copilot only
+npx erp-master-agent --ide cursor                 # Cursor only
+npx erp-master-agent --ide windsurf               # Windsurf only
+npx erp-master-agent --ide antigravity            # Antigravity / Gemini only
+npx erp-master-agent --ide cursor --ide claude    # Multiple IDEs
+npx erp-master-agent --target-dir .custom/skills  # Custom directory
+npx erp-master-agent --repo /path/to/project      # Different project root
+npx erp-master-agent --dry-run                    # Preview only
+npx erp-master-agent --help                       # Show help
 ```
 
 ---
@@ -293,7 +310,7 @@ npx erus-master-agent --help                        # Show help
 ## Repository Layout
 
 ```
-erus-master-agent/
+erp-master-agent/
 ├── skills/                    ← Canonical skill definitions (28 folders)
 │   ├── amazon-api/            ← API references + SKILL.md with frontmatter
 │   ├── amazon-expert/         ← Marketplace coordinator agent
@@ -360,7 +377,7 @@ No build step required — `skills/` and `rules/` are committed source.
 ### Adding a new rule
 
 1. Create a new `.md` file in `rules/`
-2. Run `npx erus-master-agent` to propagate to all IDE targets
+2. Run `npx erp-master-agent` to propagate to all IDE targets
 3. The CLI auto-includes it in generated `.cursorrules`, `.windsurfrules`, and `CLAUDE.md`
 
 ### Adding a new skill
@@ -376,7 +393,7 @@ No build step required — `skills/` and `rules/` are committed source.
    ---
    ```
 3. Use relative sibling paths to reference other skills: `../erp-marketplace-api/SKILL.md`
-4. Run `npx erus-master-agent` to install
+4. Run `npx erp-master-agent` to install
 
 ### The Steering Loop
 
@@ -415,4 +432,4 @@ Pass `--ide <name>` for a specific IDE, or use `--target-dir` for a custom path.
 
 ### Paths in skills are broken
 
-Skills use relative sibling paths (`../other-skill/SKILL.md`). If you see `../../../.agents/skills/...` paths, those are legacy — run `npx erus-master-agent` to get the fixed versions.
+Skills use relative sibling paths (`../other-skill/SKILL.md`). If you see `../../../.agents/skills/...` paths, those are legacy — run `npx erp-master-agent` to get the fixed versions.

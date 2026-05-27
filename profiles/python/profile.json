@@ -1,0 +1,12 @@
+{
+  "name": "python",
+  "display": "Python",
+  "extensions": [".py"],
+  "detect": ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"],
+  "globPattern": "**/*.py",
+  "lintCommand": "python -m py_compile <file>",
+  "testCommand": "pytest <test> -x",
+  "testCommandFull": "pytest",
+  "staticAnalysis": "mypy <file>",
+  "routeVerification": null
+}

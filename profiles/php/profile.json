@@ -1,0 +1,12 @@
+{
+  "name": "php",
+  "display": "PHP / Laravel",
+  "extensions": [".php"],
+  "detect": ["composer.json", "artisan"],
+  "globPattern": "**/*.php",
+  "lintCommand": "php -l <file>",
+  "testCommand": "php artisan test --filter=<test>",
+  "testCommandFull": "php artisan test",
+  "staticAnalysis": "./vendor/bin/phpstan analyse <file>",
+  "routeVerification": "php artisan route:list --path=<prefix>"
+}

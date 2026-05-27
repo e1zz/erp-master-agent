@@ -38,23 +38,96 @@ const IDE_RULE_FILES = {
 };
 
 // ---------------------------------------------------------------------------
+// Language profile system
+// ---------------------------------------------------------------------------
+
+/**
+ * Load a language profile from the profiles/ directory.
+ * Returns null when no language is specified (language-agnostic mode).
+ */
+function loadLanguageProfile(langKey) {
+  if (!langKey) return null;
+
+  const profileDir = path.join(__dirname, 'profiles', langKey);
+  const profileFile = path.join(profileDir, 'profile.json');
+
+  if (!fs.existsSync(profileFile)) {
+    const available = listAvailableProfiles();
+    throw new Error(
+      `Unknown language profile: "${langKey}". ` +
+      `Available: ${available.join(', ')}`
+    );
+  }
+
+  const profile = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
+  profile._dir = profileDir;
+  return profile;
+}
+
+/**
+ * List all available language profile names by scanning profiles/ subdirs.
+ */
+function listAvailableProfiles() {
+  const profilesRoot = path.join(__dirname, 'profiles');
+  if (!fs.existsSync(profilesRoot)) return [];
+  return fs.readdirSync(profilesRoot, { withFileTypes: true })
+    .filter(d => d.isDirectory() && d.name !== '_base')
+    .filter(d => fs.existsSync(path.join(profilesRoot, d.name, 'profile.json')))
+    .map(d => d.name);
+}
+
+/**
+ * Auto-detect the project language by looking for marker files.
+ */
+function detectLanguage(repoRoot) {
+  const profilesRoot = path.join(__dirname, 'profiles');
+  if (!fs.existsSync(profilesRoot)) return null;
+
+  const profiles = fs.readdirSync(profilesRoot, { withFileTypes: true })
+    .filter(d => d.isDirectory() && d.name !== '_base');
+
+  for (const dir of profiles) {
+    const profileFile = path.join(profilesRoot, dir.name, 'profile.json');
+    if (!fs.existsSync(profileFile)) continue;
+
+    const profile = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
+    if (!profile.detect || !Array.isArray(profile.detect)) continue;
+
+    for (const marker of profile.detect) {
+      if (fs.existsSync(path.join(repoRoot, marker))) {
+        return dir.name;
+      }
+    }
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // CLI help
 // ---------------------------------------------------------------------------
 
 function printHelp() {
+  const available = listAvailableProfiles();
   console.log(`ERP Master Agent — skill & rules installer
 
 Usage:
-  npx erus-master-agent
-  npx erus-master-agent --ide claude
-  npx erus-master-agent --ide cursor --ide antigravity
-  npx erus-master-agent --target-dir .my-agent/skills
-  npx erus-master-agent --repo /path/to/project --dry-run
+  npx erp-master-agent
+  npx erp-master-agent --lang php
+  npx erp-master-agent --lang python --ide claude
+  npx erp-master-agent --detect --ide cursor
+  npx erp-master-agent --target-dir .my-agent/skills
+  npx erp-master-agent --repo /path/to/project --dry-run
 
 Options:
   --ide <name>         Install to a preset target. Repeatable.
                        Supported: all, claude, vscode, copilot, github,
                        antigravity, agents, gemini, cursor, windsurf
+  --lang <name>        Language profile for framework-specific rules.
+                       Available: ${available.join(', ')}
+                       Omit for language-agnostic rules.
+  --detect             Auto-detect language from project marker files
+                       (e.g., composer.json → php, pyproject.toml → python).
   --target-dir <path>  Install skills to an additional custom directory. Repeatable.
   --repo <path>        Repository root to install into (default: cwd).
   --dry-run            Show planned copies without writing files.
@@ -65,7 +138,13 @@ Default behavior (no --ide flag) installs into ALL supported targets:
   .claude/skills   + .claude/rules        (Claude Code)
   .github/skills   + .github/rules        (VS Code / GitHub Copilot)
   .cursor/skills   + .cursor/rules + .cursorrules   (Cursor)
-  .windsurf/skills + .windsurf/rules + .windsurfrules (Windsurf)`);
+  .windsurf/skills + .windsurf/rules + .windsurfrules (Windsurf)
+
+Language Profiles:
+  When --lang is specified, the installer overlays language-specific
+  feedback sensors, architecture fitness rules, and IDE-specific
+  verification commands (e.g., php -l, pytest, eslint).
+  When omitted, only language-agnostic rules are installed.`);
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +156,8 @@ function parseArgs(argv) {
     ide: [],
     targetDir: [],
     repo: process.cwd(),
+    lang: null,
+    detect: false,
     dryRun: false,
     help: false,
   };
@@ -91,6 +172,19 @@ function parseArgs(argv) {
 
     if (arg === '--dry-run') {
       parsed.dryRun = true;
+      continue;
+    }
+
+    if (arg === '--detect') {
+      parsed.detect = true;
+      continue;
+    }
+
+    if (arg === '--lang' || arg === '--language') {
+      const value = argv[i + 1];
+      if (!value) throw new Error(`${arg} requires a value.`);
+      parsed.lang = value.toLowerCase();
+      i += 1;
       continue;
     }
 
@@ -194,29 +288,119 @@ function copyDir(src, dest, dryRun) {
 }
 
 // ---------------------------------------------------------------------------
+// Profile-aware rule copying
+// ---------------------------------------------------------------------------
+
+// Rules that are always language-agnostic (copied from rules/ as-is).
+const AGNOSTIC_RULES = [
+  'agent-behavior.md',
+  'autoactivation.md',
+  'coding-standards.md',
+];
+
+// Rules that have profile-specific overrides.
+const PROFILED_RULES = [
+  'feedback-sensors.md',
+  'architecture-fitness.md',
+];
+
+/**
+ * Copy rules into a target directory, using profile overrides when available.
+ *
+ * - AGNOSTIC_RULES are always copied from `rules/` verbatim.
+ * - PROFILED_RULES are sourced from:
+ *     1. `profiles/<lang>/` if a language profile is active
+ *     2. `profiles/_base/`  otherwise (language-agnostic)
+ *   Falls back to the original `rules/` copy if neither profile directory
+ *   contains the file (backward compatibility).
+ */
+function copyRulesWithProfile(rulesDir, destDir, profile, dryRun) {
+  ensureDir(destDir, dryRun);
+
+  // Copy language-agnostic rules verbatim
+  for (const fileName of AGNOSTIC_RULES) {
+    const src = path.join(rulesDir, fileName);
+    if (!fs.existsSync(src)) continue;
+    if (!dryRun) {
+      fs.copyFileSync(src, path.join(destDir, fileName));
+    }
+  }
+
+  // Copy profiled rules from the best source
+  for (const fileName of PROFILED_RULES) {
+    const src = resolveProfiledFile(fileName, profile);
+    if (!src) {
+      // Ultimate fallback: original rules/ copy
+      const fallback = path.join(rulesDir, fileName);
+      if (fs.existsSync(fallback) && !dryRun) {
+        fs.copyFileSync(fallback, path.join(destDir, fileName));
+      }
+      continue;
+    }
+    if (!dryRun) {
+      fs.copyFileSync(src, path.join(destDir, fileName));
+    }
+  }
+}
+
+/**
+ * Resolve the best source for a profiled rule file.
+ * Returns the absolute path, or null if nothing is found.
+ */
+function resolveProfiledFile(fileName, profile) {
+  // 1. Language-specific override
+  if (profile && profile._dir) {
+    const langFile = path.join(profile._dir, fileName);
+    if (fs.existsSync(langFile)) return langFile;
+  }
+
+  // 2. Base (language-agnostic) version
+  const baseFile = path.join(__dirname, 'profiles', '_base', fileName);
+  if (fs.existsSync(baseFile)) return baseFile;
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // IDE-specific rule file generation
 // ---------------------------------------------------------------------------
 
-function buildMergedRulesContent(rulesDir) {
-  const files = fs.readdirSync(rulesDir)
-    .filter(f => f.endsWith('.md'))
-    .sort();
+function buildMergedRulesContent(rulesDir, profile) {
+  // Determine which files to merge and from where
+  const sections = [];
 
-  const sections = files.map(f => {
-    const content = fs.readFileSync(path.join(rulesDir, f), 'utf8').trim();
-    return content;
-  });
+  // Agnostic rules from the target rules dir
+  for (const fileName of AGNOSTIC_RULES) {
+    const filePath = path.join(rulesDir, fileName);
+    if (fs.existsSync(filePath)) {
+      sections.push(fs.readFileSync(filePath, 'utf8').trim());
+    }
+  }
+
+  // Profiled rules from best source
+  for (const fileName of PROFILED_RULES) {
+    const src = resolveProfiledFile(fileName, profile);
+    if (src) {
+      sections.push(fs.readFileSync(src, 'utf8').trim());
+    } else {
+      // Fallback to what's in the target dir already
+      const filePath = path.join(rulesDir, fileName);
+      if (fs.existsSync(filePath)) {
+        sections.push(fs.readFileSync(filePath, 'utf8').trim());
+      }
+    }
+  }
 
   return sections.join('\n\n---\n\n') + '\n';
 }
 
-function generateIdeRuleFile(repoRoot, fileName, rulesDir, dryRun) {
+function generateIdeRuleFile(repoRoot, fileName, rulesDir, profile, dryRun) {
   const filePath = path.join(repoRoot, fileName);
   if (dryRun) {
     console.log(`  Would generate ${fileName}`);
     return;
   }
-  const content = buildMergedRulesContent(rulesDir);
+  const content = buildMergedRulesContent(rulesDir, profile);
   fs.writeFileSync(filePath, content, 'utf8');
   console.log(`  Generated ${fileName}`);
 }
@@ -225,7 +409,7 @@ function generateIdeRuleFile(repoRoot, fileName, rulesDir, dryRun) {
 // CLAUDE.md generator (for Claude Code)
 // ---------------------------------------------------------------------------
 
-function generateClaudeMd(repoRoot, rulesDir, skillsDir, dryRun) {
+function generateClaudeMd(repoRoot, rulesDir, skillsDir, profile, dryRun) {
   const filePath = path.join(repoRoot, 'CLAUDE.md');
   if (dryRun) {
     console.log('  Would generate CLAUDE.md');
@@ -235,10 +419,14 @@ function generateClaudeMd(repoRoot, rulesDir, skillsDir, dryRun) {
   // Build skill index from frontmatter
   const skillIndex = buildSkillIndex(skillsDir);
 
+  const langLabel = profile ? profile.display : 'ERP marketplace integration';
+  const lintCmd   = profile ? profile.lintCommand : 'the project linter';
+  const testCmd   = profile ? profile.testCommand : 'the project test runner';
+
   const lines = [
     '# ERP Marketplace Integration — Agent Instructions',
     '',
-    'This project is a Laravel ERP integration API connecting to multiple marketplaces.',
+    `This project is an ${langLabel} API connecting to multiple marketplaces.`,
     '',
     '## Available Skills',
     '',
@@ -255,8 +443,8 @@ function generateClaudeMd(repoRoot, rulesDir, skillsDir, dryRun) {
   lines.push('');
   lines.push('Detailed rules are in `.claude/rules/`. The critical ones:');
   lines.push('');
-  lines.push('- Run `php -l <file>` after every PHP change');
-  lines.push('- Run the narrowest relevant test before presenting work');
+  lines.push(`- Run \`${lintCmd}\` after every code change`);
+  lines.push(`- Run the narrowest relevant test before presenting work`);
   lines.push('- NEVER bypass `DISABLE_MARKETPLACE_PUSH` or `skipMarketplaceFanout`');
   lines.push('- Follow Controller → Orchestrator → Factory → Service layering');
   lines.push('- All database queries MUST be tenant-scoped');
@@ -275,7 +463,7 @@ function generateClaudeMd(repoRoot, rulesDir, skillsDir, dryRun) {
 // Copilot instructions generator (for VS Code / GitHub Copilot)
 // ---------------------------------------------------------------------------
 
-function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
+function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, profile, dryRun) {
   const instructionsDir = path.join(repoRoot, '.github', 'instructions');
   const mainFile = path.join(repoRoot, '.github', 'copilot-instructions.md');
 
@@ -287,12 +475,15 @@ function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
 
   ensureDir(instructionsDir, false);
 
+  const langLabel = profile ? profile.display : 'ERP marketplace integration';
+  const lintCmd   = profile ? profile.lintCommand : 'the project linter';
+  const globPat   = profile ? profile.globPattern : '**/*';
+
   // Main copilot-instructions.md (always-on)
-  const skillIndex = buildSkillIndex(skillsDir);
   const mainLines = [
     '# ERP Marketplace Integration',
     '',
-    'This project is a Laravel ERP integration API.',
+    `This project is an ${langLabel} API.`,
     '',
     '## Architecture',
     '',
@@ -303,7 +494,7 @@ function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
     '',
     '## Verification',
     '',
-    '- Run `php -l <file>` after every PHP change',
+    `- Run \`${lintCmd}\` after every code change`,
     '- Run the narrowest relevant test before presenting work',
     '',
     '## Kill Switches (NEVER bypass)',
@@ -346,7 +537,7 @@ function generateCopilotInstructions(repoRoot, rulesDir, skillsDir, dryRun) {
 // Cursor scoped rules generator (.cursor/rules/*.mdc)
 // ---------------------------------------------------------------------------
 
-function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
+function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, profile, dryRun) {
   const cursorRulesDir = path.join(repoRoot, '.cursor', 'rules');
 
   if (dryRun) {
@@ -356,11 +547,14 @@ function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
 
   ensureDir(cursorRulesDir, false);
 
+  const lintCmd  = profile ? profile.lintCommand : 'the project linter';
+  const globPat  = profile ? profile.globPattern : '**/*';
+
   // Global always-on rule (concise)
   const globalRule = [
     '---',
     'description: "ERP marketplace integration core rules"',
-    'globs: "**/*.php"',
+    `globs: "${globPat}"`,
     'alwaysApply: true',
     '---',
     '',
@@ -369,7 +563,7 @@ function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
     '- Follow Controller → Orchestrator → Factory → Service → Mapper layering',
     '- All database queries MUST be tenant-scoped',
     '- NEVER bypass `DISABLE_MARKETPLACE_PUSH` or `skipMarketplaceFanout`',
-    '- Run `php -l <file>` after every PHP change',
+    `- Run \`${lintCmd}\` after every code change`,
     '- Run the narrowest relevant test before presenting work',
     '- Read the matching SKILL.md in `.cursor/skills/` before modifying marketplace code',
     '',
@@ -415,7 +609,7 @@ function generateCursorScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
 // Windsurf scoped rules generator (.windsurf/rules/*.md)
 // ---------------------------------------------------------------------------
 
-function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
+function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, profile, dryRun) {
   const wsRulesDir = path.join(repoRoot, '.windsurf', 'rules');
 
   if (dryRun) {
@@ -424,6 +618,8 @@ function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
   }
 
   ensureDir(wsRulesDir, false);
+
+  const lintCmd = profile ? profile.lintCommand : 'the project linter';
 
   // Global core rule (always-on)
   const globalRule = [
@@ -437,7 +633,7 @@ function generateWindsurfScopedRules(repoRoot, rulesDir, skillsDir, dryRun) {
     '- Follow Controller → Orchestrator → Factory → Service → Mapper layering',
     '- All database queries MUST be tenant-scoped',
     '- NEVER bypass `DISABLE_MARKETPLACE_PUSH` or `skipMarketplaceFanout`',
-    '- Run `php -l <file>` after every PHP change',
+    `- Run \`${lintCmd}\` after every code change`,
     '- Run the narrowest relevant test before presenting work',
     '- Read the matching SKILL.md in `.windsurf/skills/` before modifying marketplace code',
     '',
@@ -513,6 +709,25 @@ async function main() {
     return;
   }
 
+  // Resolve language profile
+  let langKey = args.lang;
+  if (!langKey && args.detect) {
+    langKey = detectLanguage(args.repo);
+    if (langKey) {
+      console.log(`Detected language profile: ${langKey}`);
+    } else {
+      console.log('No language detected — using language-agnostic rules.');
+    }
+  }
+
+  let profile = null;
+  try {
+    profile = loadLanguageProfile(langKey);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+
   // Locate bundled assets
   const skillsDir = locateBundled('skills');
   if (!skillsDir) {
@@ -529,7 +744,8 @@ async function main() {
     resolved.skills.push(custom);
   }
 
-  console.log(`\nInstalling ERP Master Agent into ${args.repo}\n`);
+  const profileLabel = profile ? ` (${profile.display} profile)` : ' (language-agnostic)';
+  console.log(`\nInstalling ERP Master Agent into ${args.repo}${profileLabel}\n`);
 
   // Copy skills
   console.log('Skills targets:');
@@ -539,20 +755,20 @@ async function main() {
     copyDir(skillsDir, abs, args.dryRun);
   }
 
-  // Copy rules
+  // Copy rules (profile-aware)
   if (rulesDir) {
     console.log('\nRules targets:');
     for (const rel of resolved.rules) {
       const abs = path.resolve(args.repo, rel);
       console.log(`  ${rel}`);
-      copyDir(rulesDir, abs, args.dryRun);
+      copyRulesWithProfile(rulesDir, abs, profile, args.dryRun);
     }
 
     // Generate IDE-specific merged rule files (.cursorrules, .windsurfrules)
     if (Object.keys(resolved.ruleFiles).length > 0) {
       console.log('\nIDE rule files:');
       for (const [, fileName] of Object.entries(resolved.ruleFiles)) {
-        generateIdeRuleFile(args.repo, fileName, rulesDir, args.dryRun);
+        generateIdeRuleFile(args.repo, fileName, rulesDir, profile, args.dryRun);
       }
     }
   }
@@ -576,19 +792,19 @@ async function main() {
     console.log('\nIDE-specific harness files:');
 
     if (activeIdes.has('claude')) {
-      generateClaudeMd(args.repo, rulesDir, skillsDir, args.dryRun);
+      generateClaudeMd(args.repo, rulesDir, skillsDir, profile, args.dryRun);
     }
 
     if (activeIdes.has('vscode') || activeIdes.has('copilot') || activeIdes.has('github')) {
-      generateCopilotInstructions(args.repo, rulesDir, skillsDir, args.dryRun);
+      generateCopilotInstructions(args.repo, rulesDir, skillsDir, profile, args.dryRun);
     }
 
     if (activeIdes.has('cursor')) {
-      generateCursorScopedRules(args.repo, rulesDir, skillsDir, args.dryRun);
+      generateCursorScopedRules(args.repo, rulesDir, skillsDir, profile, args.dryRun);
     }
 
     if (activeIdes.has('windsurf')) {
-      generateWindsurfScopedRules(args.repo, rulesDir, skillsDir, args.dryRun);
+      generateWindsurfScopedRules(args.repo, rulesDir, skillsDir, profile, args.dryRun);
     }
   }
 

@@ -1,0 +1,12 @@
+{
+  "name": "node",
+  "display": "Node.js / TypeScript",
+  "extensions": [".js", ".ts", ".mjs", ".mts"],
+  "detect": ["package.json", "tsconfig.json"],
+  "globPattern": "**/*.{js,ts,mjs,mts}",
+  "lintCommand": "npx eslint <file>",
+  "testCommand": "npx jest <test>",
+  "testCommandFull": "npm test",
+  "staticAnalysis": "npx tsc --noEmit",
+  "routeVerification": null
+}

@@ -1,9 +1,15 @@
 {
-  "name": "erus-master-agent",
-  "version": "0.2.7",
+  "name": "erp-master-agent",
+  "version": "1.0.0",
+  "author": "Jorge Zazueta",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deasde/erp-master-agent"
+  },
+  "homepage": "https://github.com/deasde/erp-master-agent#readme",
   "description": "NPX installer for ERP marketplace agent skills across Claude Code, VS Code Copilot, Cursor, Windsurf, Antigravity, and other agent runtimes.",
   "bin": {
-    "erus-master-agent": "index.js",
+    "erp-master-agent": "index.js",
     "install-skills": "index.js"
   },
   "scripts": {
@@ -13,7 +19,8 @@
     "index.js",
     "README.md",
     "skills/**",
-    "rules/**"
+    "rules/**",
+    "profiles/**"
   ],
   "keywords": [
     "agents",

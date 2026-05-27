@@ -15,6 +15,7 @@ This skill provides Shopify-specific API references, payloads, and local ERP imp
 - [Authentication](./references/auth.md)
 - [Products and Inventory](./references/products-inventory.md)
 - [Orders and Fulfillment](./references/orders-fulfillment.md)
+- [Payments and Financials](./references/financials.md)
 - [Webhooks](./references/webhooks.md)
 
 Read the smallest reference that matches the task before looking elsewhere.
